@@ -154,6 +154,18 @@ frappe.ui.form.on("Sales Order Item", {
 		if(!frm.doc.delivery_date) {
 			erpnext.utils.copy_value_in_all_rows(frm.doc, cdt, cdn, "items", "delivery_date");
 		}
+	},
+	// ******************************  FILTER ADDED 2021 - 11 - 28 ********************************
+	warehouse: function(frm, cdt, cdn) {
+		frm.set_query("warehouse", function() {
+			return {
+//				"filters": ["warehouse","disabled", "==",0]
+				filters: {
+					"disabled": 0
+				}
+		}
+	});
+	// ******************************  FILTER ADDED 2021 - 11 - 28 ********************************
 	}
 });
 
@@ -558,6 +570,7 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 	}
 
 	make_delivery_note(delivery_dates) {
+		//console.log("delivery_dates: "+delivery_dates)
 		frappe.model.open_mapped_doc({
 			method: "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note",
 			frm: this.frm,
@@ -625,6 +638,13 @@ erpnext.selling.SalesOrderController = class SalesOrderController extends erpnex
 				{
 					fieldname: 'items_for_po', fieldtype: 'Table', label: 'Select Items',
 					fields: [
+						{
+							fieldtype:'Data', //HIDDEN COLUMN ADDED 2022-08-11
+							fieldname:'name',
+							label: __('name'),
+							read_only:1,
+							in_list_view:0
+						},
 						{
 							fieldtype:'Data',
 							fieldname:'item_code',

@@ -12,7 +12,8 @@ frappe.ui.form.on('Bank Guarantee', {
 		frm.set_query("bank", function() {
 			return {
 				filters: {
-					company: frm.doc.company
+					// Filter removed on 2022-06-18
+					//company: frm.doc.company
 				}
 			};
 		});

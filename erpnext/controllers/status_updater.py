@@ -97,39 +97,67 @@ status_map = {
 		["Cancelled", "eval:self.docstatus==2"],
 		["Closed", "eval:self.status=='Closed' and self.docstatus != 2"],
 	],
+	#"Material Request": [
+	#	["Draft", None],
+	#	["Stopped", "eval:self.status == 'Stopped'"],
+	#	["Cancelled", "eval:self.docstatus == 2"],
+	#	["Pending", "eval:self.status != 'Stopped' and self.per_ordered == 0 and self.docstatus == 1"],
+	#	[
+	#		"Ordered",
+	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+	#	],
+	#	[
+	#		"Transferred",
+	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'",
+	#	],
+	#	[
+	#		"Issued",
+	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'",
+	#	],
+	#	[
+	#		"Received",
+	#		"eval:self.status != 'Stopped' and self.per_received == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+	#	],
+	#	[
+	#		"Partially Received",
+	#		"eval:self.status != 'Stopped' and self.per_received > 0 and self.per_received < 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+	#	],
+	#	[
+	#		"Partially Ordered",
+	#		"eval:self.status != 'Stopped' and self.per_ordered < 100 and self.per_ordered > 0 and self.docstatus == 1",
+	#	],
+	#	[
+	#		"Manufactured",
+	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'",
+	#	],
+	#],
+		# ***************************  MODIFIED 2022-09-10 ******************************************************************************************
+	# "Material Request": [
+	# 	["Draft", None],
+	# 	["Stopped", "eval:self.status == 'Stopped'"],
+	# 	["Cancelled", "eval:self.docstatus == 2"],
+	# 	["Pending", "eval:self.status != 'Stopped' and self.per_ordered == 0 and self.docstatus == 1"],  # ***********
+	# 	["Partially Ordered", "eval:self.status != 'Stopped' and self.per_ordered < 100 and self.per_ordered > 0 and self.docstatus == 1"], # ***********
+	# 	["Ordered", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'"],
+	# 	["Transferred", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'"],
+	# 	["Issued", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'"],
+	# 	["Received", "eval:self.status != 'Stopped' and self.per_received == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'"],
+	# 	["Partially Received", "eval:self.status != 'Stopped' and self.per_received > 0 and self.per_received < 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'"],
+	# 	["Manufactured", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'"]
+	# ],
 	"Material Request": [
 		["Draft", None],
 		["Stopped", "eval:self.status == 'Stopped'"],
 		["Cancelled", "eval:self.docstatus == 2"],
-		["Pending", "eval:self.status != 'Stopped' and self.per_ordered == 0 and self.docstatus == 1"],
-		[
-			"Ordered",
-			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
-		],
-		[
-			"Transferred",
-			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'",
-		],
-		[
-			"Issued",
-			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'",
-		],
-		[
-			"Received",
-			"eval:self.status != 'Stopped' and self.per_received == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
-		],
-		[
-			"Partially Received",
-			"eval:self.status != 'Stopped' and self.per_received > 0 and self.per_received < 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
-		],
-		[
-			"Partially Ordered",
-			"eval:self.status != 'Stopped' and self.per_ordered < 100 and self.per_ordered > 0 and self.docstatus == 1",
-		],
-		[
-			"Manufactured",
-			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'",
-		],
+		["Pending", "eval:self.status != 'Stopped' and self.per_issued == 0 and self.per_ordered == 0 and self.docstatus == 1"], # ***********
+		["Partially Issued", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_issued > 0 and self.per_ordered == 0 and self.docstatus == 1"], # ***********
+		["Partially Ordered", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_ordered < 100 and self.per_ordered > 0 and self.per_received == 0 and self.docstatus == 1"], # ***********
+		["Ordered", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_ordered == 100 and self.docstatus == 1"], # ***********
+		["Partially Received", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_received < self.per_ordered and self.per_received > 0 and self.docstatus == 1"], # ***********
+		["Received", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_ordered == self.per_received and self.per_received > 0 and self.docstatus == 1"], # ***********
+		["Issued", "eval:self.status != 'Stopped' and self.per_issued == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'"], # ***********
+		["Transferred", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'"],
+		["Manufactured", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'"]
 	],
 	"Bank Transaction": [
 		["Unreconciled", "eval:self.docstatus == 1 and self.unallocated_amount>0"],

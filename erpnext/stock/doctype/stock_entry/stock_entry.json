@@ -27,7 +27,6 @@
   "set_posting_time",
   "inspection_required",
   "apply_putaway_rule",
-  "items_tab",
   "bom_info_section",
   "from_bom",
   "use_multi_level_bom",
@@ -57,7 +56,6 @@
   "column_break_22",
   "total_incoming_value",
   "value_difference",
-  "additional_costs_section",
   "additional_costs",
   "total_additional_costs",
   "supplier_info_tab",
@@ -82,7 +80,9 @@
   "job_card",
   "amended_from",
   "credit_note",
-  "is_return"
+  "is_return",
+  "items_tab",
+  "additional_costs_section"
  ],
  "fields": [
   {
@@ -405,6 +405,7 @@
    "collapsible_depends_on": "total_additional_costs",
    "fieldname": "additional_costs_section",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Additional Costs"
   },
   {
@@ -614,6 +615,7 @@
   {
    "fieldname": "items_tab",
    "fieldtype": "Tab Break",
+   "hidden": 1,
    "label": "Items"
   },
   {
@@ -677,7 +679,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-01-03 16:02:50.741816",
+ "modified": "2024-01-24 20:37:44.270852",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Stock Entry",

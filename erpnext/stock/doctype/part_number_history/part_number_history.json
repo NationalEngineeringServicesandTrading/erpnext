@@ -1,0 +1,38 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-02-09 10:59:35.183817",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "part_number",
+  "obsoletion_date"
+ ],
+ "fields": [
+  {
+   "fieldname": "part_number",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Old Part Number",
+   "reqd": 1
+  },
+  {
+   "fieldname": "obsoletion_date",
+   "fieldtype": "Date",
+   "label": "Obsoletion Date"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-02-09 11:02:35.273815",
+ "modified_by": "Administrator",
+ "module": "Stock",
+ "name": "Part Number History",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

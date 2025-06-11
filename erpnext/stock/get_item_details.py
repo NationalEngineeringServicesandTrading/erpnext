@@ -1479,6 +1479,7 @@ def update_party_blanket_order(args, out):
 
 @frappe.whitelist()
 def get_blanket_order_details(args):
+	return '' #*************************  ADDED FROM VERSION 12 TO OVERRIDE BO DETAILS. 2023-07-03 ******************************
 	if isinstance(args, str):
 		args = frappe._dict(json.loads(args))
 

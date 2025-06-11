@@ -39,10 +39,10 @@
   "plc_conversion_rate",
   "ignore_pricing_rule",
   "before_items_section",
+  "set_warehouse",
   "scan_barcode",
   "set_from_warehouse",
   "items_col_break",
-  "set_warehouse",
   "items_section",
   "items",
   "sb_last_purchase",
@@ -63,13 +63,13 @@
   "supplied_items",
   "taxes_section",
   "tax_category",
-  "taxes_and_charges",
   "column_break_53",
   "shipping_rule",
   "column_break_50",
   "incoterm",
   "named_place",
   "section_break_52",
+  "taxes_and_charges",
   "taxes",
   "totals",
   "base_taxes_and_charges_added",
@@ -116,7 +116,7 @@
   "billing_address",
   "column_break_103",
   "billing_address_display",
-  "drop_ship",
+  "end_user_section",
   "customer",
   "customer_name",
   "column_break_19",
@@ -124,6 +124,7 @@
   "customer_contact_display",
   "customer_contact_mobile",
   "customer_contact_email",
+  "drop_ship",
   "terms_tab",
   "payment_schedule_section",
   "payment_terms_template",
@@ -592,7 +593,6 @@
    "fieldname": "taxes_section",
    "fieldtype": "Section Break",
    "hide_border": 1,
-   "label": "Taxes and Charges",
    "oldfieldtype": "Section Break",
    "options": "fa fa-money"
   },
@@ -619,7 +619,8 @@
   {
    "fieldname": "section_break_52",
    "fieldtype": "Section Break",
-   "hide_border": 1
+   "hide_border": 1,
+   "label": "Taxes and Charges"
   },
   {
    "fieldname": "taxes",
@@ -1187,8 +1188,7 @@
   {
    "fieldname": "dashboard",
    "fieldtype": "Tab Break",
-   "label": "Dashboard",
-   "show_dashboard": 1
+   "label": "Dashboard"
   },
   {
    "fieldname": "column_break_7",
@@ -1265,13 +1265,18 @@
    "fieldname": "shipping_address_section",
    "fieldtype": "Section Break",
    "label": "Shipping Address"
+  },
+  {
+   "fieldname": "end_user_section",
+   "fieldtype": "Section Break",
+   "label": "End User"
   }
  ],
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
  "links": [],
- "modified": "2023-01-28 18:59:16.322824",
+ "modified": "2023-05-06 12:54:34.670357",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Purchase Order",

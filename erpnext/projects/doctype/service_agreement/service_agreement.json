@@ -1,0 +1,498 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "SSA.YY./.MM./.###",
+ "creation": "2024-09-21 08:44:43.724208",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "details_tab",
+  "title",
+  "customer",
+  "agreement_status",
+  "per_apg",
+  "per_pbg",
+  "per_retention",
+  "brand_reference",
+  "supplier",
+  "column_break_lovrq",
+  "company",
+  "start_date",
+  "end_date",
+  "customer_contract_no",
+  "per_icv_retention",
+  "icv_improvement_plan",
+  "currency_and_price_list_section",
+  "currency",
+  "conversion_rate",
+  "column_break_kjnjj",
+  "buying_currency",
+  "buying_conversion_rate",
+  "totals_section",
+  "total",
+  "base_total",
+  "column_break_8zwfw",
+  "buying_total",
+  "buying_base_total",
+  "scopes_section",
+  "includes_software_subscription",
+  "includes_scheduled_site_visits",
+  "includes_hardware_rental",
+  "includes_retainer_fee",
+  "column_break_yzxwk",
+  "includes_on_call_support",
+  "includes_material_rates",
+  "blanket_order",
+  "includes_project_works",
+  "project",
+  "details_section",
+  "details",
+  "terms_and_conditions_section",
+  "tc_name",
+  "terms",
+  "software_subscription_tab",
+  "software_subscription",
+  "scheduled_site_visits_tab",
+  "scheduled_site_visits",
+  "hardware_rental_tab",
+  "hardware_rental",
+  "retainer_fee_tab",
+  "retainer_fee",
+  "on_call_support_tab",
+  "on_call_support",
+  "amended_from",
+  "billing_schedule_section",
+  "billing_schedule",
+  "lft",
+  "rgt",
+  "is_group",
+  "old_parent",
+  "parent_service_agreement"
+ ],
+ "fields": [
+  {
+   "fieldname": "details_tab",
+   "fieldtype": "Tab Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "fieldname": "customer",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Customer",
+   "options": "Customer",
+   "reqd": 1
+  },
+  {
+   "fieldname": "agreement_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Agreement Status",
+   "options": "\nOpen\nClosed\nCancelled\nPending PAC\nPending FAC\nPending PBG",
+   "reqd": 1
+  },
+  {
+   "fieldname": "per_apg",
+   "fieldtype": "Percent",
+   "label": "APG %"
+  },
+  {
+   "fieldname": "per_pbg",
+   "fieldtype": "Percent",
+   "label": "PBG %"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "customer_contract_no",
+   "fieldtype": "Data",
+   "label": "Customer Contract No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "per_retention",
+   "fieldtype": "Percent",
+   "label": "Retention %"
+  },
+  {
+   "fieldname": "per_icv_retention",
+   "fieldtype": "Percent",
+   "label": "ICV Retention %"
+  },
+  {
+   "fieldname": "currency_and_price_list_section",
+   "fieldtype": "Section Break",
+   "label": "Currency"
+  },
+  {
+   "fieldname": "currency",
+   "fieldtype": "Link",
+   "label": "Selling Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "conversion_rate",
+   "fieldtype": "Float",
+   "label": "Selling Conversion Rate",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_kjnjj",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total",
+   "fieldtype": "Currency",
+   "label": "Selling Total",
+   "options": "currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "base_total",
+   "fieldtype": "Currency",
+   "label": "Selling Total (Company Currency)",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "scopes_section",
+   "fieldtype": "Section Break",
+   "label": "Scopes"
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_software_subscription",
+   "fieldtype": "Check",
+   "label": "Software Subscription",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_scheduled_site_visits",
+   "fieldtype": "Check",
+   "label": "Scheduled Site Visits",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_hardware_rental",
+   "fieldtype": "Check",
+   "label": "Hardware Rental",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_retainer_fee",
+   "fieldtype": "Check",
+   "label": "Retainer Fee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_yzxwk",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_on_call_support",
+   "fieldtype": "Check",
+   "label": "On Call Support",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_material_rates",
+   "fieldtype": "Check",
+   "label": "Material Rates",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.includes_material_rates==1;",
+   "fieldname": "blanket_order",
+   "fieldtype": "Link",
+   "label": "Blanket Order",
+   "options": "Blanket Order"
+  },
+  {
+   "default": "0",
+   "fieldname": "includes_project_works",
+   "fieldtype": "Check",
+   "label": "Project Works",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.includes_project_works==1;",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "Project"
+  },
+  {
+   "fieldname": "billing_schedule_section",
+   "fieldtype": "Tab Break",
+   "label": "Billing Schedule"
+  },
+  {
+   "fieldname": "billing_schedule",
+   "fieldtype": "Table",
+   "label": "Billing Schedule",
+   "options": "SA Billing Schedule"
+  },
+  {
+   "depends_on": "eval:doc.includes_software_subscription==1;",
+   "fieldname": "software_subscription_tab",
+   "fieldtype": "Tab Break",
+   "label": "Software Subscription"
+  },
+  {
+   "fieldname": "software_subscription",
+   "fieldtype": "Table",
+   "label": "Software Subscription",
+   "options": "SA Software Subscription"
+  },
+  {
+   "depends_on": "eval:doc.includes_scheduled_site_visits==1;",
+   "fieldname": "scheduled_site_visits_tab",
+   "fieldtype": "Tab Break",
+   "label": "Scheduled Site Visits"
+  },
+  {
+   "fieldname": "scheduled_site_visits",
+   "fieldtype": "Table",
+   "label": "Scheduled Site Visits",
+   "options": "SA Scheduled Site Visits"
+  },
+  {
+   "depends_on": "eval:doc.includes_hardware_rental==1;",
+   "fieldname": "hardware_rental_tab",
+   "fieldtype": "Tab Break",
+   "label": "Hardware Rental"
+  },
+  {
+   "fieldname": "hardware_rental",
+   "fieldtype": "Table",
+   "label": "Hardware Rental",
+   "options": "SA Hardware Rental"
+  },
+  {
+   "depends_on": "eval:doc.includes_retainer_fee==1;",
+   "fieldname": "retainer_fee_tab",
+   "fieldtype": "Tab Break",
+   "label": "Retainer Fee"
+  },
+  {
+   "fieldname": "retainer_fee",
+   "fieldtype": "Table",
+   "label": "Retainer Fee",
+   "options": "SA Retainer Fee"
+  },
+  {
+   "depends_on": "eval:doc.includes_on_call_support==1;",
+   "fieldname": "on_call_support_tab",
+   "fieldtype": "Tab Break",
+   "label": "On Call Support"
+  },
+  {
+   "fieldname": "on_call_support",
+   "fieldtype": "Table",
+   "label": "On Call Support",
+   "options": "SA On Call Support"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Service Agreement",
+   "print_hide": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "lft",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Left",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "rgt",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Right",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_group",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Group"
+  },
+  {
+   "fieldname": "old_parent",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Old Parent",
+   "options": "Service Agreement"
+  },
+  {
+   "fieldname": "parent_service_agreement",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Parent Service Agreement",
+   "options": "Service Agreement"
+  },
+  {
+   "depends_on": "eval:doc.per_icv_retention>0;",
+   "fieldname": "icv_improvement_plan",
+   "fieldtype": "Table",
+   "label": "ICV Improvement Plan",
+   "options": "SA ICV Improvement Plan"
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Details"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Text Editor",
+   "label": "Details"
+  },
+  {
+   "fieldname": "brand_reference",
+   "fieldtype": "Link",
+   "label": "Brand Reference",
+   "options": "Brand",
+   "reqd": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "fieldname": "terms_and_conditions_section",
+   "fieldtype": "Section Break",
+   "label": "Terms and Conditions"
+  },
+  {
+   "fieldname": "tc_name",
+   "fieldtype": "Link",
+   "label": "Terms",
+   "options": "Terms and Conditions"
+  },
+  {
+   "fieldname": "terms",
+   "fieldtype": "Text Editor",
+   "label": "Terms and Conditions"
+  },
+  {
+   "fieldname": "supplier",
+   "fieldtype": "Link",
+   "label": "Supplier",
+   "options": "Supplier",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_lovrq",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "buying_currency",
+   "fieldtype": "Link",
+   "label": "Buying Currency",
+   "options": "Currency",
+   "reqd": 1
+  },
+  {
+   "fieldname": "buying_conversion_rate",
+   "fieldtype": "Float",
+   "label": "Buying Conversion Rate",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "fieldname": "column_break_8zwfw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "buying_total",
+   "fieldtype": "Currency",
+   "label": "Buying Total",
+   "options": "buying_currency",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "buying_base_total",
+   "fieldtype": "Currency",
+   "label": "Buying Total (Company Currency)",
+   "read_only": 1,
+   "reqd": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "is_tree": 1,
+ "links": [],
+ "modified": "2024-10-30 10:16:01.478143",
+ "modified_by": "Administrator",
+ "module": "Projects",
+ "name": "Service Agreement",
+ "naming_rule": "Expression (old style)",
+ "nsm_parent_field": "parent_service_agreement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

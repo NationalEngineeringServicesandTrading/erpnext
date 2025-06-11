@@ -13,7 +13,6 @@
   "customer",
   "tax_id",
   "customer_name",
-  "column_break1",
   "posting_date",
   "posting_time",
   "set_posting_time",
@@ -23,6 +22,11 @@
   "is_return",
   "issue_credit_note",
   "return_against",
+  "incoterm",
+  "customer_po_details",
+  "po_no",
+  "column_break_17",
+  "po_date",
   "accounting_dimensions_section",
   "cost_center",
   "column_break_18",
@@ -42,8 +46,8 @@
   "items_section",
   "scan_barcode",
   "pick_list",
-  "col_break_warehouse",
   "set_warehouse",
+  "col_break_warehouse",
   "set_target_warehouse",
   "section_break_30",
   "items",
@@ -62,7 +66,6 @@
   "column_break_43",
   "shipping_rule",
   "column_break_39",
-  "incoterm",
   "named_place",
   "section_break_41",
   "taxes",
@@ -134,10 +137,6 @@
   "transporter_name",
   "driver_name",
   "lr_date",
-  "customer_po_details",
-  "po_no",
-  "column_break_17",
-  "po_date",
   "sales_team_section_break",
   "sales_partner",
   "amount_eligible_for_commission",
@@ -162,8 +161,8 @@
   "customer_group",
   "territory",
   "column_break5",
-  "excise_page",
   "instructions",
+  "excise_page",
   "connections_tab",
   "column_break_25"
  ],
@@ -212,11 +211,6 @@
    "in_global_search": 1,
    "label": "Customer Name",
    "read_only": 1
-  },
-  {
-   "fieldname": "column_break1",
-   "fieldtype": "Column Break",
-   "oldfieldtype": "Column Break"
   },
   {
    "fieldname": "amended_from",
@@ -305,7 +299,6 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
    "fieldname": "customer_po_details",
    "fieldtype": "Section Break",
    "label": "Customer PO Details"
@@ -1119,9 +1112,10 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
+   "bold": 1,
    "fieldname": "excise_page",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "Excise Page Number",
    "oldfieldname": "excise_page",
    "oldfieldtype": "Data",
@@ -1401,7 +1395,7 @@
  "idx": 146,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-12 18:38:53.067799",
+ "modified": "2023-05-08 08:58:01.463569",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Delivery Note",

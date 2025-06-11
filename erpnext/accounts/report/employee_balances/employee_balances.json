@@ -1,0 +1,45 @@
+{
+ "add_total_row": 1,
+ "columns": [],
+ "creation": "2024-03-13 23:41:59.909524",
+ "disable_prepared_report": 0,
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [],
+ "idx": 0,
+ "is_standard": "Yes",
+ "modified": "2024-03-14 08:06:06.592006",
+ "modified_by": "Administrator",
+ "module": "Accounts",
+ "name": "Employee Balances",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "select employee 'Employee:Link/Employee:100', employee_name 'Name:Data:180', company 'Company:Link/Company:240', status 'Status:Data:100',\nSUM(CASE\n  WHEN account = 'Leave Salary' THEN balance ELSE 0 END\n) 'Leave Salary:Float:120',\nSUM(CASE\n  WHEN account = 'Air Ticket' THEN balance ELSE 0 END\n) 'Air Ticket:Float:120',\nSUM(CASE\n  WHEN account = 'EOSB' THEN balance ELSE 0 END\n) 'EOSB:Float:120',\nSUM(CASE\n  WHEN account = 'Annual Leave' THEN balance ELSE 0 END\n) 'Annual Leave:Float:120',\nSUM(CASE\n  WHEN account = 'Sick Leave' THEN balance ELSE 0 END\n) 'Sick Leave:Float:120'\nfrom\n(\nselect e.name employee, e.employee_name, e.company, e.status, ifnull(l.ac,'') account, round(ifnull(l.balance,0),2) balance\nfrom `tabEmployee` e\nleft join \n(\nselect if(account='2020101001 - Airticket Payable - NE', 'Air Ticket', \n\tif(account='2020101002 - EOSB Payable - NE', 'EOSB', \n    if(account='2020101004 - Leave Salary Payable - NE', 'Leave Salary', 'Other'))) ac, \nparty, round(sum(credit_in_account_currency - debit_in_account_currency),2) balance from `tabGL Entry` \nwhere party_type = 'Employee'\nand account in\n(\n#'2010104002 - Employee Expense Claims - NE',\n'2020101001 - Airticket Payable - NE',\n'2020101002 - EOSB Payable - NE',\n'2020101004 - Leave Salary Payable - NE'\n)\nand is_cancelled = 0\nand posting_date <= %(posting_date)s\ngroup by account, party\n) l on e.name = l.party\nunion\nselect e.name employee, e.employee_name, e.company, e.status, ifnull(l2.leave_type,'') account, round(ifnull(l2.available_leave,0),2) balance\nfrom `tabEmployee` e\nleft join \n(\nselect employee, leave_type, sum(leaves) available_leave from `tabLeave Ledger Entry` \nwhere leave_type in ('Annual Leave','Sick Leave') and \ndocstatus = 1 and \ncreation <= %(posting_date)s\ngroup by employee, leave_type\n) l2 on e.name = l2.employee\norder by employee\n) s\ngroup by employee\n;",
+ "ref_doctype": "GL Entry",
+ "report_name": "Employee Balances",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Finance Head"
+  },
+  {
+   "role": "Finance Officer"
+  },
+  {
+   "role": "General Manager"
+  },
+  {
+   "role": "Director"
+  },
+  {
+   "role": "Procurement Invoice View"
+  }
+ ]
+}

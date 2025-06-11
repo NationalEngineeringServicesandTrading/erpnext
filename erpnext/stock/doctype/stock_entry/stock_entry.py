@@ -124,7 +124,7 @@ class StockEntry(StockController):
 			self.mark_finished_and_scrap_items()
 			self.validate_finished_goods()
 
-		self.validate_with_material_request()
+		#self.validate_with_material_request()
 		self.validate_batch()
 		self.validate_inspection()
 		self.validate_fg_completed_qty()
@@ -189,7 +189,7 @@ class StockEntry(StockController):
 		self.update_work_order()
 		self.update_stock_ledger()
 
-		self.ignore_linked_doctypes = ("GL Entry", "Stock Ledger Entry", "Repost Item Valuation")
+		self.ignore_linked_doctypes = ("GL Entry", "Stock Ledger Entry", "Repost Item Valuation", "Sales Order")
 
 		self.make_gl_entries_on_cancel()
 		self.repost_future_sle_and_gle()

@@ -1,0 +1,102 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-21 07:53:43.047355",
+ "default_view": "List",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "description",
+  "rate",
+  "rate_type",
+  "from_date",
+  "to_date",
+  "invoicing",
+  "buying_rate"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "label": "Rate",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "rate_type",
+   "fieldtype": "Select",
+   "label": "Rate Type",
+   "options": "\nPer-Hour\nOT1\nOT2\nDaily\nWeekly\nMonthly\nOne-Time\nPer-Person\nPer-Visit\nPer-Session\nPer-Instance",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "invoicing",
+   "fieldtype": "Select",
+   "label": "Invoicing",
+   "options": "\nIn Advance\nPost Service",
+   "reqd": 1
+  },
+  {
+   "fieldname": "buying_rate",
+   "fieldtype": "Currency",
+   "label": "Buying Rate",
+   "options": "buying_currency"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-26 13:12:24.714436",
+ "modified_by": "Administrator",
+ "module": "Projects",
+ "name": "SA On Call Support",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

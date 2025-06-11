@@ -355,7 +355,7 @@ class ReceivablePayableReport(object):
 		if self.party_type == "Customer":
 			si_list = frappe.db.sql(
 				"""
-				select name, due_date, po_no
+				select name, due_date, sales_order, po_no
 				from `tabSales Invoice`
 				where posting_date <= %s
 			""",
@@ -383,7 +383,7 @@ class ReceivablePayableReport(object):
 		if self.party_type == "Supplier":
 			for pi in frappe.db.sql(
 				"""
-				select name, due_date, bill_no, bill_date
+				select name, due_date, po_number, bill_no, bill_date
 				from `tabPurchase Invoice`
 				where posting_date <= %s
 			""",
@@ -933,8 +933,11 @@ class ReceivablePayableReport(object):
 		self.add_column(label="Due Date", fieldtype="Date")
 
 		if self.party_type == "Supplier":
+			self.add_column(label=_("PO Number"), fieldname="po_number", fieldtype="Data")
 			self.add_column(label=_("Bill No"), fieldname="bill_no", fieldtype="Data")
 			self.add_column(label=_("Bill Date"), fieldname="bill_date", fieldtype="Date")
+		else:
+			self.add_column(label=_("Sales Order"), fieldname="sales_order", fieldtype="Data")
 
 		if self.filters.based_on_payment_terms:
 			self.add_column(label=_("Payment Term"), fieldname="payment_term", fieldtype="Data")

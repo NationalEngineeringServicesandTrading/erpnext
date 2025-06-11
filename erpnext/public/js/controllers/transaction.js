@@ -92,9 +92,15 @@ erpnext.TransactionController = class TransactionController extends erpnext.taxe
 
 		frappe.ui.form.on(this.frm.doctype, "discount_amount", function(frm) {
 			frm.cscript.set_dynamic_labels();
-
+			console.log('hey ' + cstr(frm.via_discount_percentage))
 			if (!frm.via_discount_percentage) {
-				frm.doc.additional_discount_percentage = 0;
+				if (frm.doc.total>0) {
+					frm.doc.additional_discount_percentage = frm.doc.discount_amount / frm.doc.total * 100;
+				} 
+				else {
+					frm.doc.additional_discount_percentage = 0;
+				}
+				//frm.doc.additional_discount_percentage = 0;	
 			}
 
 			frm.cscript.calculate_taxes_and_totals();

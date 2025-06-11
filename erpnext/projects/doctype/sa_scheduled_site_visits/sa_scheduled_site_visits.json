@@ -1,0 +1,124 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2024-09-21 07:47:33.778647",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "item_code",
+  "item_name",
+  "description",
+  "section_break_t80uc",
+  "days",
+  "frequency",
+  "rate",
+  "buying_rate",
+  "column_break_hxanx",
+  "from_date",
+  "to_date",
+  "invoicing"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Item Code",
+   "options": "Item",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "item_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Item Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Text Editor",
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Days",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "frequency",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Frequency",
+   "options": "\nMonthly\nEvery 45 Days\nEvery 60 Days\nEvery 75 Days\nQuarterly\nSemi-Annually\nAnnually",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "rate",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Rate",
+   "options": "currency",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "invoicing",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Invoicing",
+   "options": "\nIn Advance\nPost Service",
+   "reqd": 1
+  },
+  {
+   "fieldname": "buying_rate",
+   "fieldtype": "Currency",
+   "label": "Buying Rate",
+   "options": "buying_currency"
+  },
+  {
+   "fieldname": "column_break_hxanx",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_t80uc",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2024-10-27 20:09:05.065746",
+ "modified_by": "Administrator",
+ "module": "Projects",
+ "name": "SA Scheduled Site Visits",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

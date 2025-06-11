@@ -811,8 +811,7 @@
   {
    "fieldname": "connections_tab",
    "fieldtype": "Tab Break",
-   "label": "Connections",
-   "show_dashboard": 1
+   "label": "Connections"
   },
   {
    "fieldname": "column_break_26",
@@ -844,7 +843,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-12 18:35:39.740974",
+ "modified": "2023-08-07 10:13:48.037570",
  "modified_by": "Administrator",
  "module": "Buying",
  "name": "Supplier Quotation",
@@ -902,6 +901,19 @@
    "permlevel": 1,
    "read": 1,
    "role": "Purchase Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Internal Sales Officer",
+   "share": 1,
+   "submit": 1,
    "write": 1
   }
  ],

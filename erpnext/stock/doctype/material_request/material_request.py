@@ -10,7 +10,7 @@ import json
 import frappe
 from frappe import _, msgprint
 from frappe.model.mapper import get_mapped_doc
-from frappe.utils import cint, cstr, flt, get_link_to_form, getdate, new_line_sep, nowdate
+from frappe.utils import cint, cstr, flt, get_link_to_form, getdate, new_line_sep, nowdate, formatdate
 
 from erpnext.buying.utils import check_on_hold_or_closed_status, validate_for_items
 from erpnext.controllers.buying_controller import BuyingController
@@ -299,10 +299,12 @@ def update_completed_and_requested_qty(stock_entry, method):
 
 
 def set_missing_values(source, target_doc):
-	if target_doc.doctype == "Purchase Order" and getdate(target_doc.schedule_date) < getdate(
-		nowdate()
-	):
-		target_doc.schedule_date = None
+# ******************************* COMMENTED OUT 2023-05-15 ***************************************
+#	if target_doc.doctype == "Purchase Order" and getdate(target_doc.schedule_date) < getdate(
+#		nowdate()
+#	):
+#		target_doc.schedule_date = None
+# ******************************* COMMENTED OUT 2023-05-15 ***************************************
 	target_doc.run_method("set_missing_values")
 	target_doc.run_method("calculate_taxes_and_totals")
 
@@ -337,6 +339,12 @@ def update_status(name, status):
 	material_request.check_permission("write")
 	material_request.update_status(status)
 
+#***************************************  ADDED 2023-05-15 *****************************************************
+def get_item_supplier(item_code):
+	item_group = frappe.db.get_value('Item', item_code, 'item_group')
+	supplier = frappe.db.get_value('Item Group', item_group, 'supplier')
+	return supplier
+#***************************************  ADDED 2023-05-15 *****************************************************
 
 @frappe.whitelist()
 def make_purchase_order(source_name, target_doc=None, args=None):
@@ -350,18 +358,40 @@ def make_purchase_order(source_name, target_doc=None, args=None):
 			# items only for given default supplier
 			supplier_items = []
 			for d in target_doc.items:
-				default_supplier = get_item_defaults(d.item_code, target_doc.company).get("default_supplier")
+#***************************************  ADDED 2023-05-15 *****************************************************
+				#default_supplier = get_item_defaults(d.item_code, target_doc.company).get("default_supplier")
+				default_supplier = get_item_supplier(d.item_code)
+#***************************************  ADDED 2023-05-15 *****************************************************
 				if frappe.flags.args.default_supplier == default_supplier:
 					supplier_items.append(d)
 			target_doc.items = supplier_items
-
+		
+		target_doc.sales_order_no = source.sales_order  # ************ ADDED 2022-10-05 *******************
+		target_doc.supplier = default_supplier # *************** ADDED 2023-05-15 *************************
+		target_doc.schedule_date = source.schedule_date # *************** ADDED 2023-05-15 *************************
+		#frappe.errprint(source.schedule_date)
 		set_missing_values(source, target_doc)
 
-	def select_item(d):
-		filtered_items = args.get("filtered_children", [])
-		child_filter = d.name in filtered_items if filtered_items else True
+#	def select_item(d):
+#		filtered_items = args.get("filtered_children", [])
+#		child_filter = d.name in filtered_items if filtered_items else True
+#
+#		return d.ordered_qty < d.stock_qty and child_filter
 
-		return d.ordered_qty < d.stock_qty and child_filter
+	# ****************************** ADDED FROM V12 SOURCE 2023-05-15 *************************
+	def select_item(d):
+		return (d.ordered_qty + d.issued_qty) < d.stock_qty and (d.actual_qty < d.stock_qty) # added 2022-10-05
+
+	def update_item(obj, target, source_parent):
+		target.conversion_factor = obj.conversion_factor
+		# ************* MODIFIED 2022-10-04 **************************************************
+		#target.qty = flt(flt(obj.stock_qty) - flt(obj.ordered_qty))/ target.conversion_factor
+		target.qty = max(0,flt(flt(obj.stock_qty) - flt(obj.ordered_qty) - max(flt(obj.issued_qty), flt(obj.actual_qty))))/ target.conversion_factor
+		target.stock_qty = (target.qty * target.conversion_factor)
+		#if getdate(target.schedule_date) < getdate(nowdate()): 
+		#	target.schedule_date = None
+	# ****************************** ADDED FROM V12 SOURCE 2023-05-15 *************************
+
 
 	doclist = get_mapped_doc(
 		"Material Request",
@@ -369,7 +399,7 @@ def make_purchase_order(source_name, target_doc=None, args=None):
 		{
 			"Material Request": {
 				"doctype": "Purchase Order",
-				"validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
+				"validation": {"docstatus": ["=", 1]}, #, "material_request_type": ["=", "Purchase"]}, ** COMMENTED OUT FROM V12 SOURCE 2023-05-15 **********
 			},
 			"Material Request Item": {
 				"doctype": "Purchase Order Item",
@@ -521,11 +551,21 @@ def get_default_supplier_query(doctype, txt, searchfield, start, page_len, filte
 	for d in doc.items:
 		item_list.append(d.item_code)
 
+	# return frappe.db.sql(
+	# 	"""select default_supplier
+	# 	from `tabItem Default`
+	# 	where parent in ({0}) and
+	# 	default_supplier IS NOT NULL
+	# 	""".format(
+	# 		", ".join(["%s"] * len(item_list))
+	# 	),
+	# 	tuple(item_list),
+	# )
+
 	return frappe.db.sql(
-		"""select default_supplier
-		from `tabItem Default`
-		where parent in ({0}) and
-		default_supplier IS NOT NULL
+		"""select g.supplier from `tabItem` i 
+			inner join `tabItem Group` g on i.item_group = g.name 
+			where i.name in ({0}) and g.supplier IS NOT NULL
 		""".format(
 			", ".join(["%s"] * len(item_list))
 		),

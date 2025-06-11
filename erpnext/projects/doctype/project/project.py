@@ -19,6 +19,7 @@ class Project(Document):
 		return "{0}: {1}".format(_(self.status), frappe.safe_decode(self.project_name))
 
 	def onload(self):
+		#frappe.errprint('ON LOAD')
 		self.set_onload(
 			"activity_summary",
 			frappe.db.sql(
@@ -30,17 +31,21 @@ class Project(Document):
 				as_dict=True,
 			),
 		)
-
-		self.update_costing()
+		#frappe.errprint('ON LOAD2')
+		self.add_costing()
+		#frappe.errprint('ON LOAD3')
 
 	def before_print(self, settings=None):
 		self.onload()
 
 	def validate(self):
+		frappe.errprint('validate')
+		self.add_costing()
+		frappe.errprint('post update cost')
 		if not self.is_new():
 			self.copy_from_template()
 		self.send_welcome_email()
-		self.update_costing()
+		
 		self.update_percent_complete()
 
 	def copy_from_template(self):
@@ -143,7 +148,7 @@ class Project(Document):
 	def update_project(self):
 		"""Called externally by Task"""
 		self.update_percent_complete()
-		self.update_costing()
+		self.add_costing()
 		self.db_update()
 
 	def after_insert(self):
@@ -207,7 +212,8 @@ class Project(Document):
 		if self.percent_complete == 100:
 			self.status = "Completed"
 
-	def update_costing(self):
+	def add_costing(self):
+		frappe.errprint('UPDATE COSTING')
 		from frappe.query_builder.functions import Max, Min, Sum
 
 		TimesheetDetail = frappe.qb.DocType("Timesheet Detail")
@@ -234,6 +240,21 @@ class Project(Document):
 		self.update_sales_amount()
 		self.update_billed_amount()
 		self.calculate_gross_margin()
+
+# ********** HUSAM ADDED 2024-08-18 ******************************************
+		self.update_purchase_amount()
+
+	def update_purchase_amount(self):
+		total_purchase_amount = frappe.db.sql(
+			"""select sum(base_net_total)
+			from `tabPurchase Order` where project = %s and docstatus=1""",
+			self.name,
+		)
+		frappe.errprint('****')
+		frappe.errprint(total_purchase_amount)
+		frappe.errprint('****')
+		self.total_purchase_amount = total_purchase_amount and total_purchase_amount[0][0] or 0
+# ****************************************************************************
 
 	def calculate_gross_margin(self):
 		expense_amount = (

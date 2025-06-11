@@ -10,28 +10,26 @@
  "engine": "InnoDB",
  "field_order": [
   "customer_section",
-  "column_break0",
   "title",
   "naming_series",
   "customer",
-  "customer_name",
-  "tax_id",
-  "order_type",
-  "column_break_7",
-  "transaction_date",
-  "delivery_date",
-  "column_break1",
   "po_no",
   "po_date",
+  "customer_name",
+  "source",
+  "column_break0",
   "company",
+  "transaction_date",
+  "delivery_date",
+  "project",
+  "tax_id",
+  "order_type",
   "skip_delivery_note",
   "amended_from",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
-  "project",
   "column_break_77",
-  "source",
   "campaign",
   "custom_dimensions_section",
   "currency_and_price_list",
@@ -44,8 +42,8 @@
   "ignore_pricing_rule",
   "sec_warehouse",
   "scan_barcode",
-  "column_break_28",
   "set_warehouse",
+  "column_break_28",
   "items_section",
   "items",
   "section_break_31",
@@ -239,6 +237,7 @@
    "default": "Sales",
    "fieldname": "order_type",
    "fieldtype": "Select",
+   "hidden": 1,
    "hide_days": 1,
    "hide_seconds": 1,
    "label": "Order Type",
@@ -246,15 +245,8 @@
    "oldfieldtype": "Select",
    "options": "\nSales\nMaintenance\nShopping Cart",
    "print_hide": 1,
+   "read_only": 1,
    "reqd": 1
-  },
-  {
-   "fieldname": "column_break1",
-   "fieldtype": "Column Break",
-   "hide_days": 1,
-   "hide_seconds": 1,
-   "oldfieldtype": "Column Break",
-   "width": "50%"
   },
   {
    "fieldname": "amended_from",
@@ -1171,6 +1163,7 @@
    "hide_seconds": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "source",
    "fieldtype": "Link",
    "hide_days": 1,
@@ -1402,6 +1395,7 @@
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "collapsible": 1,
    "collapsible_depends_on": "sales_team",
    "fieldname": "section_break1",
@@ -1535,6 +1529,7 @@
    "read_only": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "amount_eligible_for_commission",
    "fieldtype": "Currency",
    "label": "Amount Eligible for Commission",
@@ -1561,10 +1556,6 @@
   },
   {
    "fieldname": "dimension_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_7",
    "fieldtype": "Column Break"
   },
   {
@@ -1642,8 +1633,19 @@
  "icon": "fa fa-file-text",
  "idx": 105,
  "is_submittable": 1,
- "links": [],
- "modified": "2022-12-12 18:34:00.681780",
+ "links": [
+  {
+   "group": "Guarantees and Insurance",
+   "link_doctype": "Bank Guarantee",
+   "link_fieldname": "reference_docname"
+  },
+  {
+   "group": "Guarantees and Insurance",
+   "link_doctype": "Insurance",
+   "link_fieldname": "sales_order"
+  }
+ ],
+ "modified": "2025-04-22 21:18:47.379268",
  "modified_by": "Administrator",
  "module": "Selling",
  "name": "Sales Order",

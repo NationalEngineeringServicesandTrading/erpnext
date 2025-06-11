@@ -31,6 +31,9 @@ def get_data(report_filters):
 		"is_cancelled": 0,
 		"company": report_filters.company,
 		"posting_date": ("<=", report_filters.as_on_date),
+		# *********************************  ADDED 2021-11-22  ****************************************
+	    "posting_date": (">=", '2021-01-01')	
+		# *********************************  ADDED 2021-11-22  ****************************************
 	}
 
 	currency_precision = get_currency_precision() or 2

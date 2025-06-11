@@ -25,6 +25,7 @@
   "apply_putaway_rule",
   "is_return",
   "return_against",
+  "incoterm",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -39,8 +40,8 @@
   "ignore_pricing_rule",
   "sec_warehouse",
   "scan_barcode",
-  "column_break_31",
   "set_warehouse",
+  "column_break_31",
   "set_from_warehouse",
   "col_break_warehouse",
   "rejected_warehouse",
@@ -63,7 +64,6 @@
   "shipping_col",
   "shipping_rule",
   "column_break_53",
-  "incoterm",
   "named_place",
   "taxes_section",
   "taxes",
@@ -750,12 +750,14 @@
    "fieldtype": "Column Break"
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "additional_discount_percentage",
    "fieldtype": "Float",
    "label": "Additional Discount Percentage",
    "print_hide": 1
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "discount_amount",
    "fieldtype": "Currency",
    "label": "Additional Discount Amount",
@@ -1167,8 +1169,7 @@
   {
    "fieldname": "connections_tab",
    "fieldtype": "Tab Break",
-   "label": "Connections",
-   "show_dashboard": 1
+   "label": "Connections"
   },
   {
    "fieldname": "column_break_12",
@@ -1224,7 +1225,7 @@
   {
    "fieldname": "incoterm",
    "fieldtype": "Link",
-   "label": "Incoterm",
+   "label": "Incoterms",
    "options": "Incoterm"
   },
   {
@@ -1238,7 +1239,7 @@
  "idx": 261,
  "is_submittable": 1,
  "links": [],
- "modified": "2022-12-12 18:40:32.447752",
+ "modified": "2025-01-09 15:05:08.139764",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt",
