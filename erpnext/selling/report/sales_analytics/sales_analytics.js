@@ -8,7 +8,7 @@ frappe.query_reports["Sales Analytics"] = {
 			fieldname: "tree_type",
 			label: __("Tree Type"),
 			fieldtype: "Select",
-			options: ["Customer Group", "Customer", "Item Group", "Item", "Territory", "Order Type", "Project", "Cost Center", "Cost Center-Item Group", "Cost Center-Sales Person"],
+			options: ["Customer Group", "Customer", "Item Group", "Item", "Territory", "Order Type", "Project", "Cost Center", "Cost Center-Item Group", "Cost Center-Sales Person", "Brand-Sales Region"],
 			default: "Customer",
 			reqd: 1
 		},

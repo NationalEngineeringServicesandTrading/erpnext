@@ -45,14 +45,36 @@ class Analytics(object):
 		# Skipping total row for tree-view reports
 		skip_total_row = 0
 
-		if self.filters.tree_type in ["Supplier Group", "Item Group", "Customer Group", "Territory", "Cost Center"]:
+		if self.filters.tree_type in ["Supplier Group", "Item Group", "Customer Group", "Territory", "Order Type", "Cost Center"]:
 			skip_total_row = 1
 
 		return self.columns, self.data, None, self.chart, None, skip_total_row
 
 	def get_columns(self):
+		# ****** ADDED 2025-06-27 HUSAM *********************************/
+		if self.filters.tree_type == "Brand-Sales Region":
+			self.columns = [
+				{
+					"label": _("Brand"),
+					"options": "Brand",
+					"fieldname": "brand",
+					"fieldtype": "Link",
+					"width": 200,
+				}
+			]
+			self.columns.append(
+				{
+					"label": _("Sales Region"),
+					"options": "Sales Region",
+					"fieldname": "sales_region",
+					"fieldtype": "Link",
+					"width": 140,
+				}
+			)
+		# ****** ADDED 2025-06-27 HUSAM *********************************/
+
 		# ****** ADDED 2023-12-12 HUSAM *********************************/
-		if self.filters.tree_type == "Cost Center-Item Group" or self.filters.tree_type == "Cost Center-Sales Person":
+		elif self.filters.tree_type == "Cost Center-Item Group" or self.filters.tree_type == "Cost Center-Sales Person":
 			self.columns = [
 				{
 					"label": _("Cost Center"),
@@ -158,6 +180,12 @@ class Analytics(object):
 			self.get_sales_transactions_based_on_cost_center_sales_person()
 			self.get_rows_by_group()
 		# ****** ADDED 2023-12-12 HUSAM *********************************/
+
+		# ****** ADDED 2025-06-27 HUSAM *********************************/
+		elif self.filters.tree_type == "Brand-Sales Region":
+			self.get_sales_transactions_based_on_Brand_Sales_Region()
+			self.get_rows_by_group()
+		# ****** ADDED 2025-06-27 HUSAM *********************************/
 
 		elif self.filters.tree_type == "Order Type":
 			if self.filters.doc_type != "Sales Order":
@@ -297,12 +325,11 @@ class Analytics(object):
 			"""
 			select i.cost_center as entity, i.{value_field} as value_field, s.{date_field}
 			from `tab{doctype} Item` i , `tab{doctype}` s
-			where s.name = i.parent and i.docstatus = 1 and s.company = %s
-			and s.{date_field} between %s and %s
+			where s.name = i.parent and i.docstatus = 1 and s.company = '%s'
+			and s.{date_field} between '%s' and '%s'
 		""".format(
 				date_field=self.date_field, value_field=value_field, doctype=self.filters.doc_type
-			),
-			(self.filters.company, self.filters.from_date, self.filters.to_date),
+			) % (self.filters.company, self.filters.from_date, self.filters.to_date),
 			as_dict=1,
 		)
 
@@ -351,6 +378,27 @@ class Analytics(object):
 
 		self.get_groups()
 	# ****** ADDED 2023-12-23 HUSAM *********************************/
+
+	# ****** ADDED 2025-06-27 HUSAM *********************************/
+	def get_sales_transactions_based_on_Brand_Sales_Region(self):
+		if self.filters["value_quantity"] == "Value":
+			value_field = "base_net_amount"
+		else:
+			value_field = "qty"
+
+		sql="""
+			select t.brand as brand, s.sales_region as sales_region, i.{value_field} as value_field, s.{date_field}, 
+			concat(concat(t.brand,' / '), s.sales_region) as entity
+			from `tab{doctype} Item` i inner join `tab{doctype}` s on s.name = i.parent
+            left join `tabItem` t on i.item_code = t.name
+			where i.docstatus = 1 and s.company = '%s'
+			and s.{date_field} between '%s' and '%s'
+		""".format(date_field=self.date_field, value_field=value_field, doctype=self.filters.doc_type) % (self.filters.company, self.filters.from_date, self.filters.to_date)
+		#frappe.errprint (sql)
+		self.entries = frappe.db.sql(sql,as_dict=1)
+
+		self.get_groups()
+	# ****** ADDED 2025-06-27 HUSAM *********************************/
 
 	def get_sales_transactions_based_on_project(self):
 		if self.filters["value_quantity"] == "Value":
@@ -404,10 +452,19 @@ class Analytics(object):
 			if self.filters.tree_type == "Cost Center-Item Group" or self.filters.tree_type == "Cost Center-Sales Person":
 				row = {"entity": d.name, "indent": self.depth_map.get(d.name), "cost_center": d.cost_center, "item_group": d.item_group, "sales_person":d.sales_person}
 			# ****** ADDED 2023-12-12 HUSAM *********************************/
+
+			# ****** ADDED 2025-06-27 HUSAM *********************************/
+			if self.filters.tree_type == "Brand-Sales Region":
+				row = {"entity": d.name, "indent": self.depth_map.get(d.name), "brand": d.brand, "sales_region": d.sales_region}
+			# ****** ADDED 2025-06-27 HUSAM *********************************/
 			total = 0
 			for end_date in self.periodic_daterange:
 				period = self.get_period(end_date)
 				amount = flt(self.entity_periodic_data.get(d.name, {}).get(period, 0.0))
+				# if d.name is None:
+				# 	pass
+				# elif d.name.find('BENTLY') > 0:
+				# 	frappe.errprint('*** / ' + d.name + ': ' + str(period) + ': ' + str(amount))
 				row[scrub(period)] = amount
 				if d.parent and (self.filters.tree_type != "Order Type" or d.parent == "Order Types"):
 					self.entity_periodic_data.setdefault(d.parent, frappe._dict()).setdefault(period, 0.0)
@@ -416,7 +473,7 @@ class Analytics(object):
 
 			row["total"] = total
 			# ****** ADDED 2023-12-12&23 HUSAM *********************************/
-			if self.filters.tree_type == "Cost Center-Item Group" or self.filters.tree_type == "Cost Center-Sales Person":
+			if self.filters.tree_type == "Cost Center-Item Group" or self.filters.tree_type == "Cost Center-Sales Person" :
 				if total>0 and self.depth_map.get(d.name)>0:
 					out = [row] + out
 			else:
@@ -434,6 +491,11 @@ class Analytics(object):
 			period = self.get_period(d.get(self.date_field))
 			self.entity_periodic_data.setdefault(d.entity, frappe._dict()).setdefault(period, 0.0)
 			self.entity_periodic_data[d.entity][period] += flt(d.value_field)
+
+			# if d.entity is None:
+			# 		pass
+			# elif d.entity.find('BENTLY') > 0:
+			# 	frappe.errprint('entity: ' + str(d.entity) + ' / period: ' + str(period) + ' / value_field: ' + str(d.value_field))
 
 			if self.filters.tree_type == "Item":
 				self.entity_periodic_data[d.entity]["stock_uom"] = d.stock_uom
@@ -515,6 +577,40 @@ class Analytics(object):
 					""".format(company = self.filters.company),
 				as_dict=1,
 			)
+		# ****** ADDED 2025-06-27 HUSAM *********************************/	
+		elif self.filters.tree_type == "Brand-Sales Region":
+				if self.filters["value_quantity"] == "Value":
+					value_field = "base_net_amount"
+				else:
+					value_field = "qty"
+				
+				self.group_entries = frappe.db.sql(
+				"""
+				select brand, sales_region, name, parent,
+				ROW_NUMBER() OVER(ORDER BY brand, sales_region)*2 as lft,
+				ROW_NUMBER() OVER(ORDER BY brand, sales_region)*2+1 as rgt
+				from (select brand, sales_region, entity as name, null as parent from 
+				(select t.brand as brand, s.sales_region as sales_region, i.{value_field} as value_field, s.{date_field}, 
+				concat(concat(t.brand,' / '), s.sales_region) as entity
+				from `tab{doctype} Item` i inner join `tab{doctype}` s on s.name = i.parent
+				left join `tabItem` t on i.item_code = t.name
+				where i.docstatus = 1 and s.company = '%s'
+				and s.{date_field} between '%s' and '%s') r2
+				group by brand, sales_region, entity ) r1 
+				order by brand, sales_region, lft, rgt
+				""".format(date_field=self.date_field, value_field=value_field, doctype=self.filters.doc_type) % (self.filters.company, self.filters.from_date, self.filters.to_date)
+				, as_dict=1,
+			)
+				#select b.name as brand, sr.name as sales_region,
+				#concat(concat(b.name,' / '), sr.name) as name,  
+				# NULL as parent, 
+				# ROW_NUMBER() OVER(ORDER BY b.name, sr.name)*2 as lft,
+				# ROW_NUMBER() OVER(ORDER BY b.name, sr.name)*2+1 as rgt
+				# from `tabBrand` b, `tabSales Region` sr
+				# where b.disabled = 0 and sr.docstatus = 0 
+				# order by b.name, sr.name;			
+
+
 		# ****** ADDED 2023-12-23 HUSAM *********************************/
 		elif self.filters.tree_type == "Cost Center-Sales Person":
 			self.group_entries = frappe.db.sql(
