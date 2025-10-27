@@ -25,7 +25,6 @@
   "apply_putaway_rule",
   "is_return",
   "return_against",
-  "incoterm",
   "accounting_dimensions_section",
   "cost_center",
   "dimension_col_break",
@@ -40,8 +39,8 @@
   "ignore_pricing_rule",
   "sec_warehouse",
   "scan_barcode",
-  "set_warehouse",
   "column_break_31",
+  "set_warehouse",
   "set_from_warehouse",
   "col_break_warehouse",
   "rejected_warehouse",
@@ -64,6 +63,7 @@
   "shipping_col",
   "shipping_rule",
   "column_break_53",
+  "incoterm",
   "named_place",
   "taxes_section",
   "taxes",
@@ -288,7 +288,8 @@
    "no_copy": 1,
    "options": "Purchase Receipt",
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "section_addresses",
@@ -437,6 +438,7 @@
   {
    "fieldname": "rejected_warehouse",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Rejected Warehouse",
    "no_copy": 1,
    "oldfieldname": "rejected_warehouse",
@@ -462,6 +464,7 @@
    "depends_on": "eval:doc.is_subcontracted",
    "fieldname": "supplier_warehouse",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Supplier Warehouse",
    "no_copy": 1,
    "oldfieldname": "supplier_warehouse",
@@ -646,7 +649,7 @@
   },
   {
    "fieldname": "other_charges_calculation",
-   "fieldtype": "Long Text",
+   "fieldtype": "Text Editor",
    "label": "Taxes and Charges Calculation",
    "no_copy": 1,
    "oldfieldtype": "HTML",
@@ -750,14 +753,12 @@
    "fieldtype": "Column Break"
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "additional_discount_percentage",
    "fieldtype": "Float",
    "label": "Additional Discount Percentage",
    "print_hide": 1
   },
   {
-   "allow_on_submit": 1,
    "fieldname": "discount_amount",
    "fieldtype": "Currency",
    "label": "Additional Discount Amount",
@@ -884,7 +885,7 @@
    "no_copy": 1,
    "oldfieldname": "status",
    "oldfieldtype": "Select",
-   "options": "\nDraft\nTo Bill\nCompleted\nReturn Issued\nCancelled\nClosed",
+   "options": "\nDraft\nPartly Billed\nTo Bill\nCompleted\nReturn Issued\nCancelled\nClosed",
    "print_hide": 1,
    "print_width": "150px",
    "read_only": 1,
@@ -1076,7 +1077,8 @@
    "no_copy": 1,
    "options": "Delivery Note",
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "scan_barcode",
@@ -1115,6 +1117,7 @@
    "depends_on": "eval: doc.is_internal_supplier",
    "fieldname": "set_from_warehouse",
    "fieldtype": "Link",
+   "ignore_user_permissions": 1,
    "label": "Set From Warehouse",
    "options": "Warehouse"
   },
@@ -1169,7 +1172,8 @@
   {
    "fieldname": "connections_tab",
    "fieldtype": "Tab Break",
-   "label": "Connections"
+   "label": "Connections",
+   "show_dashboard": 1
   },
   {
    "fieldname": "column_break_12",
@@ -1225,7 +1229,7 @@
   {
    "fieldname": "incoterm",
    "fieldtype": "Link",
-   "label": "Incoterms",
+   "label": "Incoterm",
    "options": "Incoterm"
   },
   {
@@ -1239,7 +1243,7 @@
  "idx": 261,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-01-09 15:05:08.139764",
+ "modified": "2025-08-06 16:41:02.690658",
  "modified_by": "Administrator",
  "module": "Stock",
  "name": "Purchase Receipt",

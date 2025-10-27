@@ -51,7 +51,6 @@ def repost_stock(
 	only_bin=False,
 	allow_negative_stock=False,
 ):
-
 	if not only_bin:
 		repost_actual_qty(item_code, warehouse, allow_zero_rate, allow_negative_stock)
 
@@ -85,7 +84,7 @@ def get_balance_qty_from_sle(item_code, warehouse):
 	balance_qty = frappe.db.sql(
 		"""select qty_after_transaction from `tabStock Ledger Entry`
 		where item_code=%s and warehouse=%s and is_cancelled=0
-		order by posting_date desc, posting_time desc, creation desc
+		order by posting_datetime desc, creation desc
 		limit 1""",
 		(item_code, warehouse),
 	)
@@ -121,7 +120,7 @@ def get_reserved_qty(item_code, warehouse):
 					and parenttype='Sales Order'
 					and item_code != parent_item
 					and exists (select * from `tabSales Order` so
-					where name = dnpi_in.parent and docstatus = 1 and status != 'Closed')
+					where name = dnpi_in.parent and docstatus = 1 and status not in ('On Hold', 'Closed'))
 				) dnpi)
 			union
 				(select stock_qty as dnpi_qty, qty as so_item_qty,
@@ -131,7 +130,7 @@ def get_reserved_qty(item_code, warehouse):
 				and (so_item.delivered_by_supplier is null or so_item.delivered_by_supplier = 0)
 				and exists(select * from `tabSales Order` so
 					where so.name = so_item.parent and so.docstatus = 1
-					and so.status != 'Closed'))
+					and so.status not in ('On Hold', 'Closed')))
 			) tab
 		where
 			so_item_qty >= so_item_delivered_qty

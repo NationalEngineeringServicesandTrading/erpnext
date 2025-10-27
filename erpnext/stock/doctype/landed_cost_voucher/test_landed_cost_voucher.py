@@ -87,7 +87,6 @@ class TestLandedCostVoucher(FrappeTestCase):
 		self.assertPurchaseReceiptLCVGLEntries(pr)
 
 	def assertPurchaseReceiptLCVGLEntries(self, pr):
-
 		gl_entries = get_gl_entries("Purchase Receipt", pr.name)
 
 		self.assertTrue(gl_entries)
@@ -175,8 +174,60 @@ class TestLandedCostVoucher(FrappeTestCase):
 		)
 		self.assertEqual(last_sle_after_landed_cost.stock_value - last_sle.stock_value, 50.0)
 
-	def test_landed_cost_voucher_against_purchase_invoice(self):
+	def test_landed_cost_voucher_for_zero_purchase_rate(self):
+		"Test impact of LCV on future stock balances."
+		from erpnext.stock.doctype.item.test_item import make_item
 
+		item = make_item("LCV Stock Item", {"is_stock_item": 1})
+		warehouse = "Stores - _TC"
+
+		pr = make_purchase_receipt(
+			item_code=item.name,
+			warehouse=warehouse,
+			qty=10,
+			rate=0,
+			posting_date=add_days(frappe.utils.nowdate(), -2),
+		)
+
+		self.assertEqual(
+			frappe.db.get_value(
+				"Stock Ledger Entry",
+				{"voucher_type": "Purchase Receipt", "voucher_no": pr.name, "is_cancelled": 0},
+				"stock_value_difference",
+			),
+			0,
+		)
+
+		lcv = make_landed_cost_voucher(
+			company=pr.company,
+			receipt_document_type="Purchase Receipt",
+			receipt_document=pr.name,
+			charges=100,
+			distribute_charges_based_on="Distribute Manually",
+			do_not_save=True,
+		)
+
+		lcv.get_items_from_purchase_receipts()
+		lcv.items[0].applicable_charges = 100
+		lcv.save()
+		lcv.submit()
+
+		self.assertTrue(
+			frappe.db.exists(
+				"Stock Ledger Entry",
+				{"voucher_type": "Purchase Receipt", "voucher_no": pr.name, "is_cancelled": 0},
+			)
+		)
+		self.assertEqual(
+			frappe.db.get_value(
+				"Stock Ledger Entry",
+				{"voucher_type": "Purchase Receipt", "voucher_no": pr.name, "is_cancelled": 0},
+				"stock_value_difference",
+			),
+			100,
+		)
+
+	def test_landed_cost_voucher_against_purchase_invoice(self):
 		pi = make_purchase_invoice(
 			update_stock=1,
 			posting_date=frappe.utils.nowdate(),
@@ -339,7 +390,7 @@ class TestLandedCostVoucher(FrappeTestCase):
 			do_not_save=True,
 		)
 		pr.items[0].cost_center = "Main - TCP1"
-		for x in range(2):
+		for _x in range(2):
 			pr.append(
 				"items",
 				{
@@ -516,7 +567,7 @@ def make_landed_cost_voucher(**args):
 
 	lcv = frappe.new_doc("Landed Cost Voucher")
 	lcv.company = args.company or "_Test Company"
-	lcv.distribute_charges_based_on = "Amount"
+	lcv.distribute_charges_based_on = args.distribute_charges_based_on or "Amount"
 
 	lcv.set(
 		"purchase_receipts",

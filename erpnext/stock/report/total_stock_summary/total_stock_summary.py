@@ -8,7 +8,6 @@ from frappe.query_builder.functions import Sum
 
 
 def execute(filters=None):
-
 	if not filters:
 		filters = {}
 	columns = get_columns(filters)

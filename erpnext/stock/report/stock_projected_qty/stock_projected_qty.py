@@ -5,6 +5,7 @@
 import frappe
 from frappe import _
 from frappe.utils import flt, today
+from frappe.utils.nestedset import get_descendants_of
 from pypika.terms import ExistsCriterion
 
 from erpnext.accounts.doctype.pos_invoice.pos_invoice import get_pos_reserved_qty
@@ -21,6 +22,10 @@ def execute(filters=None):
 	columns = get_columns()
 	bin_list = get_bin_list(filters)
 	item_map = get_item_map(filters.get("item_code"), include_uom)
+	item_groups = []
+	if filters.get("item_group"):
+		item_groups.append(filters.item_group)
+		item_groups.extend(get_descendants_of("Item Group", filters.item_group))
 
 	warehouse_company = {}
 	data = []
@@ -40,7 +45,7 @@ def execute(filters=None):
 		if filters.brand and filters.brand != item.brand:
 			continue
 
-		elif filters.item_group and filters.item_group != item.item_group:
+		elif item_groups and item.item_group not in item_groups:
 			continue
 
 		elif filters.company and filters.company != company:
@@ -76,6 +81,7 @@ def execute(filters=None):
 				bin.ordered_qty,
 				bin.reserved_qty,
 				bin.reserved_qty_for_production,
+				bin.reserved_qty_for_production_plan,
 				bin.reserved_qty_for_sub_contract,
 				reserved_qty_for_pos,
 				bin.projected_qty,
@@ -174,6 +180,13 @@ def get_columns():
 			"convertible": "qty",
 		},
 		{
+			"label": _("Reserved for Production Plan"),
+			"fieldname": "reserved_qty_for_production_plan",
+			"fieldtype": "Float",
+			"width": 100,
+			"convertible": "qty",
+		},
+		{
 			"label": _("Reserved for Sub Contracting"),
 			"fieldname": "reserved_qty_for_sub_contract",
 			"fieldtype": "Float",
@@ -232,6 +245,7 @@ def get_bin_list(filters):
 			bin.reserved_qty,
 			bin.reserved_qty_for_production,
 			bin.reserved_qty_for_sub_contract,
+			bin.reserved_qty_for_production_plan,
 			bin.projected_qty,
 		)
 		.orderby(bin.item_code, bin.warehouse)

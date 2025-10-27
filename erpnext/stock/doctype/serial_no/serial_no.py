@@ -3,7 +3,6 @@
 
 
 import json
-from typing import List, Optional, Union
 
 import frappe
 from frappe import ValidationError, _
@@ -14,8 +13,10 @@ from frappe.utils import (
 	cint,
 	cstr,
 	flt,
+	get_datetime,
 	get_link_to_form,
 	getdate,
+	now,
 	nowdate,
 	safe_json_loads,
 )
@@ -66,7 +67,7 @@ class SerialNoDuplicateError(ValidationError):
 
 class SerialNo(StockController):
 	def __init__(self, *args, **kwargs):
-		super(SerialNo, self).__init__(*args, **kwargs)
+		super().__init__(*args, **kwargs)
 		self.via_stock_ledger = False
 
 	def validate(self):
@@ -190,13 +191,13 @@ class SerialNo(StockController):
 		entries = {}
 		sle_dict = self.get_stock_ledger_entries(serial_no)
 		if sle_dict:
-			if sle_dict.get("incoming", []):
-				entries["purchase_sle"] = sle_dict["incoming"][0]
+			last_sle = sle_dict.get("last_sle") or {}
+			entries["last_sle"] = last_sle
 
-			if len(sle_dict.get("incoming", [])) - len(sle_dict.get("outgoing", [])) > 0:
-				entries["last_sle"] = sle_dict["incoming"][0]
-			else:
-				entries["last_sle"] = sle_dict["outgoing"][0]
+			if sle_dict.get("incoming", []):
+				entries["purchase_sle"] = sle_dict["incoming"][-1]
+
+			if last_sle.get("actual_qty") < 0 and sle_dict.get("outgoing", []):
 				entries["delivery_sle"] = sle_dict["outgoing"][0]
 
 		return entries
@@ -209,7 +210,7 @@ class SerialNo(StockController):
 		for sle in frappe.db.sql(
 			"""
 			SELECT voucher_type, voucher_no,
-				posting_date, posting_time, incoming_rate, actual_qty, serial_no
+				posting_date, posting_time, incoming_rate, actual_qty, serial_no, posting_datetime
 			FROM
 				`tabStock Ledger Entry`
 			WHERE
@@ -221,7 +222,7 @@ class SerialNo(StockController):
 					OR serial_no like %s
 				)
 			ORDER BY
-				posting_date desc, posting_time desc, creation desc""",
+				posting_datetime desc, creation desc""",
 			(
 				self.item_code,
 				self.company,
@@ -233,6 +234,9 @@ class SerialNo(StockController):
 			as_dict=1,
 		):
 			if serial_no.upper() in get_serial_nos(sle.serial_no):
+				if "last_sle" not in sle_dict:
+					sle_dict["last_sle"] = sle
+
 				if cint(sle.actual_qty) > 0:
 					sle_dict.setdefault("incoming", []).append(sle)
 				else:
@@ -260,8 +264,23 @@ class SerialNo(StockController):
 				_("Cannot delete Serial No {0}, as it is used in stock transactions").format(self.name)
 			)
 
-	def update_serial_no_reference(self, serial_no=None):
+	def update_serial_no_reference(self, serial_no=None, sle=None):
 		last_sle = self.get_last_sle(serial_no)
+
+		_last_sle_dict = last_sle.get("last_sle")
+		if (
+			_last_sle_dict
+			and sle.get("voucher_type") != "Stock Reconciliation"
+			and sle.get("voucher_no") != _last_sle_dict.get("voucher_no")
+			and get_datetime(sle.get("posting_datetime"))
+			< get_datetime(_last_sle_dict.get("posting_datetime"))
+		):
+			frappe.throw(
+				_(
+					"You can not complete this transaction because a future transaction exists for the serial number {0}"
+				).format(serial_no)
+			)
+
 		self.set_purchase_details(last_sle.get("purchase_sle"))
 		self.set_sales_details(last_sle.get("delivery_sle"))
 		self.set_maintenance_status()
@@ -291,7 +310,14 @@ def validate_serial_no(sle, item_det):
 					_("Serial No {0} quantity {1} cannot be a fraction").format(sle.item_code, sle.actual_qty)
 				)
 
-			if len(serial_nos) and len(serial_nos) != abs(cint(sle.actual_qty)):
+			if (
+				(
+					(sle.voucher_type == "Stock Reconciliation" and sle.actual_qty > 0)
+					or sle.voucher_type != "Stock Reconciliation"
+				)
+				and len(serial_nos)
+				and len(serial_nos) != abs(cint(sle.actual_qty))
+			):
 				frappe.throw(
 					_("{0} Serial Numbers required for Item {1}. You have provided {2}.").format(
 						abs(sle.actual_qty), sle.item_code, len(serial_nos)
@@ -301,8 +327,17 @@ def validate_serial_no(sle, item_det):
 
 			if len(serial_nos) != len(set(serial_nos)):
 				frappe.throw(
-					_("Duplicate Serial No entered for Item {0}").format(sle.item_code), SerialNoDuplicateError
+					_("Duplicate Serial No entered for Item {0}").format(sle.item_code),
+					SerialNoDuplicateError,
 				)
+
+			allow_existing_serial_no = cint(
+				frappe.get_cached_value("Stock Settings", "None", "allow_existing_serial_no")
+			)
+
+			work_order = None
+			if sle.voucher_no and sle.voucher_type == "Stock Entry":
+				work_order = frappe.get_cached_value("Stock Entry", sle.voucher_no, "work_order")
 
 			for serial_no in serial_nos:
 				if frappe.db.exists("Serial No", serial_no):
@@ -321,6 +356,7 @@ def validate_serial_no(sle, item_det):
 							"purchase_document_no",
 							"company",
 							"status",
+							"work_order",
 						],
 						as_dict=1,
 					)
@@ -331,6 +367,31 @@ def validate_serial_no(sle, item_det):
 								_("Serial No {0} does not belong to Item {1}").format(serial_no, sle.item_code),
 								SerialNoItemError,
 							)
+
+					if sr.work_order and work_order and sr.work_order == work_order:
+						allow_existing_serial_no = True
+
+					if (
+						not allow_existing_serial_no
+						and sle.voucher_type
+						in [
+							"Stock Entry",
+							"Purchase Receipt",
+							"Purchase Invoice",
+						]
+						and cint(sle.actual_qty) > 0
+					):
+						msg = ""
+
+						if sle.voucher_type == "Stock Entry":
+							se_purpose = frappe.db.get_value("Stock Entry", sle.voucher_no, "purpose")
+							if se_purpose in ["Manufacture", "Material Receipt"]:
+								msg = f"Cannot create a {sle.voucher_type} ({se_purpose}) for the Item {frappe.bold(sle.item_code)} with the existing Serial No {frappe.bold(serial_no)}."
+						else:
+							msg = f"Cannot create a {sle.voucher_type} for the Item {frappe.bold(sle.item_code)} with the existing Serial No {frappe.bold(serial_no)}."
+
+						if msg:
+							frappe.throw(_(msg), SerialNoDuplicateError)
 
 					if cint(sle.actual_qty) > 0 and has_serial_no_exists(sr, sle):
 						doc_name = frappe.bold(get_link_to_form(sr.purchase_document_type, sr.purchase_document_no))
@@ -361,7 +422,6 @@ def validate_serial_no(sle, item_det):
 							frappe.throw(_("Serial No {0} not in stock").format(serial_no), SerialNoNotExistsError)
 
 						if sle.voucher_type in ("Delivery Note", "Sales Invoice"):
-
 							if sr.batch_no and sr.batch_no != sle.batch_no:
 								frappe.throw(
 									_("Serial No {0} does not belong to Batch {1}").format(serial_no, sle.batch_no),
@@ -375,11 +435,15 @@ def validate_serial_no(sle, item_det):
 								)
 
 							# if Sales Order reference in Serial No validate the Delivery Note or Invoice is against the same
-							if sr.sales_order:
+							if sr.sales_order and sr.delivery_document_no:
 								if sle.voucher_type == "Sales Invoice":
 									if not frappe.db.exists(
 										"Sales Invoice Item",
-										{"parent": sle.voucher_no, "item_code": sle.item_code, "sales_order": sr.sales_order},
+										{
+											"parent": sle.voucher_no,
+											"item_code": sle.item_code,
+											"sales_order": sr.sales_order,
+										},
 									):
 										frappe.throw(
 											_(
@@ -402,7 +466,11 @@ def validate_serial_no(sle, item_det):
 										)
 										if not invoice or frappe.db.exists(
 											"Sales Invoice Item",
-											{"parent": invoice, "item_code": sle.item_code, "sales_order": sr.sales_order},
+											{
+												"parent": invoice,
+												"item_code": sle.item_code,
+												"sales_order": sr.sales_order,
+											},
 										):
 											frappe.throw(
 												_(
@@ -555,7 +623,7 @@ def update_serial_nos(sle, item_det):
 
 def get_auto_serial_nos(serial_no_series, qty):
 	serial_nos = []
-	for i in range(cint(qty)):
+	for _i in range(cint(qty)):
 		serial_nos.append(get_new_serial_number(serial_no_series))
 
 	return "\n".join(serial_nos)
@@ -574,16 +642,14 @@ def auto_make_serial_nos(args):
 	voucher_type = args.get("voucher_type")
 	item_code = args.get("item_code")
 	for serial_no in serial_nos:
-		is_new = False
 		if frappe.db.exists("Serial No", serial_no):
 			sr = frappe.get_cached_doc("Serial No", serial_no)
-		elif args.get("actual_qty", 0) > 0:
-			sr = frappe.new_doc("Serial No")
-			is_new = True
+			sr = update_args_for_serial_no(sr, serial_no, args)
+		elif args.get("actual_qty", 0) > 0 and serial_no:
+			created_numbers.append(serial_no)
 
-		sr = update_args_for_serial_no(sr, serial_no, args, is_new=is_new)
-		if is_new:
-			created_numbers.append(sr.name)
+	if created_numbers:
+		make_bulk_serial_nos(args, created_numbers)
 
 	form_links = list(map(lambda d: get_link_to_form("Serial No", d), created_numbers))
 
@@ -603,15 +669,81 @@ def auto_make_serial_nos(args):
 		frappe.msgprint(message, multiple_title)
 
 
+def make_bulk_serial_nos(args, serial_nos):
+	# for field in ["item_code", "work_order", "company", "batch_no", "supplier", "location"]:
+
+	if isinstance(args, dict):
+		args = frappe._dict(args)
+
+	serial_nos_details = []
+	item_details = frappe.get_cached_value(
+		"Item", args.item_code, ["item_name", "description"], as_dict=1
+	)
+
+	supplier = None
+	if args.voucher_type in ["Purchase Receipt", "Purchase Invoice"]:
+		supplier = frappe.get_cached_value(args.voucher_type, args.voucher_no, "supplier")
+
+	for serial_no in serial_nos:
+		serial_nos_details.append(
+			(
+				serial_no,
+				serial_no,
+				now(),
+				now(),
+				frappe.session.user,
+				frappe.session.user,
+				args.warehouse,
+				args.company,
+				args.item_code,
+				item_details.item_name,
+				item_details.description,
+				"Active",
+				args.batch_no,
+				args.get("work_order"),
+				supplier,
+				args.voucher_type,
+				args.voucher_no,
+				args.posting_date,
+				args.posting_time,
+				flt(args.incoming_rate),
+			)
+		)
+
+	if serial_nos_details:
+		fields = [
+			"name",
+			"serial_no",
+			"creation",
+			"modified",
+			"owner",
+			"modified_by",
+			"warehouse",
+			"company",
+			"item_code",
+			"item_name",
+			"description",
+			"status",
+			"batch_no",
+			"work_order",
+			"supplier",
+			"purchase_document_type",
+			"purchase_document_no",
+			"purchase_date",
+			"purchase_time",
+			"purchase_rate",
+		]
+
+		frappe.db.bulk_insert("Serial No", fields=fields, values=set(serial_nos_details))
+
+
 def get_items_html(serial_nos, item_code):
 	body = ", ".join(serial_nos)
-	return """<details><summary>
-		<b>{0}:</b> {1} Serial Numbers <span class="caret"></span>
+	return f"""<details><summary>
+		<b>{item_code}:</b> {len(serial_nos)} Serial Numbers <span class="caret"></span>
 	</summary>
-	<div class="small">{2}</div></details>
-	""".format(
-		item_code, len(serial_nos), body
-	)
+	<div class="small">{body}</div></details>
+	"""
 
 
 def get_item_details(item_code):
@@ -660,7 +792,7 @@ def update_args_for_serial_no(serial_no_doc, serial_no, args, is_new=False):
 		serial_no_doc.sales_order = None
 
 	serial_no_doc.validate_item()
-	serial_no_doc.update_serial_no_reference(serial_no)
+	serial_no_doc.update_serial_no_reference(serial_no, sle=args)
 
 	if is_new:
 		serial_no_doc.db_insert()
@@ -750,11 +882,9 @@ def update_maintenance_status():
 def get_delivery_note_serial_no(item_code, qty, delivery_note):
 	serial_nos = ""
 	dn_serial_nos = frappe.db.sql_list(
-		""" select name from `tabSerial No`
+		f""" select name from `tabSerial No`
 		where item_code = %(item_code)s and delivery_document_no = %(delivery_note)s
-		and sales_invoice is null limit {0}""".format(
-			cint(qty)
-		),
+		and sales_invoice is null limit {cint(qty)}""",
 		{"item_code": item_code, "delivery_note": delivery_note},
 	)
 
@@ -769,12 +899,11 @@ def auto_fetch_serial_number(
 	qty: int,
 	item_code: str,
 	warehouse: str,
-	posting_date: Optional[str] = None,
-	batch_nos: Optional[Union[str, List[str]]] = None,
-	for_doctype: Optional[str] = None,
+	posting_date: str | None = None,
+	batch_nos: str | list[str] | None = None,
+	for_doctype: str | None = None,
 	exclude_sr_nos=None,
-) -> List[str]:
-
+) -> list[str]:
 	filters = frappe._dict({"item_code": item_code, "warehouse": warehouse})
 
 	if exclude_sr_nos is None:

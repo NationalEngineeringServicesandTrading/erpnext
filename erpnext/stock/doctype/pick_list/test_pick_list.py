@@ -139,7 +139,6 @@ class TestPickList(FrappeTestCase):
 		self.assertEqual(pick_list.locations[1].qty, 10)
 
 	def test_pick_list_shows_serial_no_for_serialized_item(self):
-
 		stock_reconciliation = frappe.get_doc(
 			{
 				"doctype": "Stock Reconciliation",
@@ -274,7 +273,6 @@ class TestPickList(FrappeTestCase):
 		pr2.cancel()
 
 	def test_pick_list_for_items_from_multiple_sales_orders(self):
-
 		item_code = make_item().name
 		try:
 			frappe.get_doc(
@@ -469,7 +467,7 @@ class TestPickList(FrappeTestCase):
 			_dict(item_code="A", warehouse="X", qty=8, picked_qty=3),
 			_dict(item_code="B", warehouse="Y", qty=6, picked_qty=4),
 		]
-		for expected_item, created_item in zip(expected_items, pl.locations):
+		for expected_item, created_item in zip(expected_items, pl.locations, strict=False):
 			_compare_dicts(expected_item, created_item)
 
 	def test_multiple_dn_creation(self):
@@ -609,7 +607,7 @@ class TestPickList(FrappeTestCase):
 
 		quantities = [5, 2]
 		bundle, components = create_product_bundle(quantities, warehouse=warehouse)
-		bundle_items = dict(zip(components, quantities))
+		bundle_items = dict(zip(components, quantities, strict=False))
 
 		so = make_sales_order(item_code=bundle, qty=3, rate=42)
 
@@ -715,7 +713,7 @@ class TestPickList(FrappeTestCase):
 
 			for item in items:
 				for warehouse in warehouses:
-					se = make_stock_entry(
+					make_stock_entry(
 						item=item.get("item_code"),
 						to_warehouse=warehouse,
 						qty=5,
@@ -808,3 +806,89 @@ class TestPickList(FrappeTestCase):
 				a = set(picked_serial_no)
 				b = set([x for x in location.serial_no.split("\n") if x])
 				self.assertSetEqual(b, b.difference(a))
+
+	def test_validate_picked_qty_with_manual_option(self):
+		warehouse = "_Test Warehouse - _TC"
+		non_serialized_item = make_item(
+			"Test Non Serialized Pick List Item For Manual Option", properties={"is_stock_item": 1}
+		).name
+
+		serialized_item = make_item(
+			"Test Serialized Pick List Item For Manual Option",
+			properties={"is_stock_item": 1, "has_serial_no": 1, "serial_no_series": "SN-HSNMSPLI-.####"},
+		).name
+
+		batched_item = make_item(
+			"Test Batched Pick List Item For Manual Option",
+			properties={
+				"is_stock_item": 1,
+				"has_batch_no": 1,
+				"batch_number_series": "SN-HBNMSPLI-.####",
+				"create_new_batch": 1,
+			},
+		).name
+
+		make_stock_entry(item=non_serialized_item, to_warehouse=warehouse, qty=10, basic_rate=100)
+		make_stock_entry(item=serialized_item, to_warehouse=warehouse, qty=10, basic_rate=100)
+		make_stock_entry(item=batched_item, to_warehouse=warehouse, qty=10, basic_rate=100)
+
+		so = make_sales_order(
+			item_code=non_serialized_item, qty=10, rate=100, do_not_save=True, warehouse=warehouse
+		)
+		so.append(
+			"items", {"item_code": serialized_item, "qty": 10, "rate": 100, "warehouse": warehouse}
+		)
+		so.append("items", {"item_code": batched_item, "qty": 10, "rate": 100, "warehouse": warehouse})
+		so.set_missing_values()
+		so.save()
+		so.submit()
+
+		pl = create_pick_list(so.name)
+		pl.pick_manually = 1
+
+		for row in pl.locations:
+			row.qty = row.qty + 10
+			row.picked_qty = row.qty
+
+		self.assertRaises(frappe.ValidationError, pl.save)
+
+	def test_pick_list_not_reset_batch(self):
+		warehouse = "_Test Warehouse - _TC"
+		item = make_item(
+			"Test Do Not Reset Picked Item",
+			properties={
+				"is_stock_item": 1,
+				"has_batch_no": 1,
+				"create_new_batch": 1,
+				"batch_number_series": "BTH-PICKLT-.######",
+			},
+		).name
+
+		se = make_stock_entry(item=item, to_warehouse=warehouse, qty=10)
+		se.reload()
+		batch1 = se.items[0].batch_no
+		se = make_stock_entry(item=item, to_warehouse=warehouse, qty=10)
+		se.reload()
+		batch2 = se.items[0].batch_no
+
+		so = make_sales_order(item_code=item, qty=10, rate=100)
+
+		pl = create_pick_list(so.name)
+		pl.save()
+
+		for loc in pl.locations:
+			self.assertEqual(loc.batch_no, batch1)
+			loc.batch_no = batch2
+			loc.picked_qty = 0.0
+
+		pl.save()
+
+		for loc in pl.locations:
+			self.assertEqual(loc.batch_no, batch1)
+			loc.batch_no = batch2
+			loc.picked_qty = 10.0
+
+		pl.save()
+
+		for loc in pl.locations:
+			self.assertEqual(loc.batch_no, batch2)
