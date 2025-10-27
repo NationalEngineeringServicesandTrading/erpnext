@@ -190,13 +190,15 @@ def get_child_warehouses(warehouse):
 	from frappe.utils.nestedset import get_descendants_of
 
 	children = get_descendants_of("Warehouse", warehouse, ignore_permissions=True, order_by="lft")
-	return children + [warehouse]  # append self for backward compatibility
+	return [*children, warehouse]  # append self for backward compatibility
 
 
 def get_warehouses_based_on_account(account, company=None):
 	warehouses = []
-	for d in frappe.get_all("Warehouse", fields=["name", "is_group"], filters={"account": account, "disabled": 0}): 
-		 # ADDED , "disabled": 0 ON 2021-12-03 ***********************************
+	for d in frappe.get_all(
+		"Warehouse", fields=["name", "is_group"], filters={"account": account, "disabled": 0}
+	):
+		# ADDED , "disabled": 0 ON 2021-12-03 ***********************************
 		if d.is_group:
 			warehouses.extend(get_child_warehouses(d.name))
 		else:
