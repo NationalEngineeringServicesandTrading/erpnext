@@ -64,7 +64,7 @@ def append_filters(query, report_filters, operations, job_card):
 	):
 		if report_filters.get(field):
 			if field == "serial_no":
-				query = query.where(job_card[field].like("%{}%".format(report_filters.get(field))))
+				query = query.where(job_card[field].like(f"%{report_filters.get(field)}%"))
 			elif field == "operation":
 				query = query.where(job_card[field].isin(operations))
 			else:

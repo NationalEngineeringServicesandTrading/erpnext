@@ -331,5 +331,7 @@ erpnext.patches.v14_0.rename_over_order_allowance_field
 erpnext.patches.v14_0.migrate_delivery_stop_lock_field
 # below migration patch should always run last
 erpnext.stock.doctype.delivery_note.patches.drop_unused_return_against_index # 2023-12-20
+erpnext.patches.v14_0.set_maintain_stock_for_bom_item
+erpnext.patches.v14_0.update_stock_uom_in_work_order_item
 erpnext.patches.v14_0.update_posting_datetime
 erpnext.stock.doctype.stock_ledger_entry.patches.ensure_sle_indexes
