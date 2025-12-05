@@ -79,25 +79,24 @@ def execute(filters=None):
 def update_available_serial_nos(available_serial_nos, sle):
 	serial_nos = get_serial_nos(sle.serial_no)
 	key = (sle.item_code, sle.warehouse)
+
 	if key not in available_serial_nos:
-		stock_balance = get_stock_balance_for(
-			sle.item_code, sle.warehouse, sle.posting_date, sle.posting_time
-		)
-		serials = get_serial_nos(stock_balance["serial_nos"]) if stock_balance["serial_nos"] else []
-		available_serial_nos.setdefault(key, serials)
+		# Start with empty list - build balance from transaction history only
+		# This ensures we only show serials that have SLE records, not orphaned serials
+		available_serial_nos.setdefault(key, [])
 
 	existing_serial_no = available_serial_nos[key]
+
+	# Properly add/remove serials based on transaction type
 	for sn in serial_nos:
 		if sle.actual_qty > 0:
-			if sn in existing_serial_no:
-				existing_serial_no.remove(sn)
-			else:
+			# Incoming: Add serial if not already in list
+			if sn not in existing_serial_no:
 				existing_serial_no.append(sn)
 		else:
+			# Outgoing: Remove serial if in list
 			if sn in existing_serial_no:
 				existing_serial_no.remove(sn)
-			else:
-				existing_serial_no.append(sn)
 
 	sle.balance_serial_no = "\n".join(existing_serial_no)
 
