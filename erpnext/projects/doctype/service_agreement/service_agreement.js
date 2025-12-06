@@ -30,7 +30,7 @@ frappe.ui.form.on('Service Agreement', {
 						filters: {'service_agreement': cur_frm.doc.name}
 					}
 				},
-				action: function(selections){ 
+				action: function(selections){
 					if (selections.length >0) {
 						cur_dialog.hide();
 						cur_frm.call({
@@ -61,9 +61,9 @@ frappe.ui.form.on('Service Agreement', {
 				'margin': '0 auto',
 				'left': '50%',
 				'transform': 'translateX(-50%)'
-			});			
+			});
 		});
-		
+
 		frm.add_custom_button(__('Create Scheduled SO'), function() {
 			frappe.prompt({
 				label: 'Scheduled Date',
@@ -127,7 +127,7 @@ frappe.ui.form.on('Service Agreement', {
 	buying_total: function(frm) {
 		convert_buying(frm);
 	},
-	
+
 	tc_name: function (frm) {
 		erpnext.utils.get_terms(frm.doc.tc_name, frm.doc, function (r) {
 			if (!r.exc) {
@@ -148,7 +148,7 @@ function convert_selling(frm) {
 		"method": "frappe.client.get_value",
 		"args": {
 			"doctype": "Currency Exchange",
-			"filters":{ 
+			"filters":{
 				"from_currency":  frm.doc.currency,
 				"to_currency": "AED"
 			},
@@ -163,7 +163,7 @@ function convert_selling(frm) {
 				frm.set_value("conversion_rate", 1);
 				frm.set_value("base_total",frm.doc.total);
 			}
-			
+
 		}
 	});
 };
@@ -172,7 +172,7 @@ function convert_buying(frm) {
 		"method": "frappe.client.get_value",
 		"args": {
 			"doctype": "Currency Exchange",
-			"filters":{ 
+			"filters":{
 				"from_currency":  frm.doc.buying_currency,
 				"to_currency": "AED"
 			},
@@ -187,7 +187,7 @@ function convert_buying(frm) {
 				frm.set_value("buying_conversion_rate", 1);
 				frm.set_value("buying_base_total",frm.doc.buying_total);
 			}
-			
+
 		}
 	});
 };

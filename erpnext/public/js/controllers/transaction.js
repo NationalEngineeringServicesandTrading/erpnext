@@ -96,11 +96,11 @@ erpnext.TransactionController = class TransactionController extends erpnext.taxe
 			if (!frm.via_discount_percentage) {
 				if (frm.doc.total>0) {
 					frm.doc.additional_discount_percentage = frm.doc.discount_amount / frm.doc.total * 100;
-				} 
+				}
 				else {
 					frm.doc.additional_discount_percentage = 0;
 				}
-				//frm.doc.additional_discount_percentage = 0;	
+				//frm.doc.additional_discount_percentage = 0;
 			}
 
 			frm.cscript.calculate_taxes_and_totals();
