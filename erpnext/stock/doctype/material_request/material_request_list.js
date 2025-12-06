@@ -8,7 +8,7 @@ frappe.listview_settings['Material Request'] = {
 			return [__("Cancelled"), "grey", "status,=,Cancelled"];
 		} else if(doc.status=="Stopped") {
 			return [__("Stopped"), "black", "status,=,Stopped"];
-		} else if (doc.transfer_status && doc.docstatus != 2 && doc.material_request_type == "Material Transfer") { 
+		} else if (doc.transfer_status && doc.docstatus != 2 && doc.material_request_type == "Material Transfer") {
 			if (doc.transfer_status == "Not Started") {
 				return [__("Not Started"), "orange"];
 			} else if (doc.transfer_status == "In Transit") {
@@ -55,3 +55,4 @@ frappe.listview_settings['Material Request'] = {
 		}
 	}
 };
+// *********************** Migrated the Material request Changes  ******************************

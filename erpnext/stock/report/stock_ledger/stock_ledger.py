@@ -4,12 +4,10 @@
 
 import frappe
 from frappe import _
-from frappe.query_builder.functions import CombineDatetime
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, get_datetime
 
 from erpnext.stock.doctype.inventory_dimension.inventory_dimension import get_inventory_dimensions
 from erpnext.stock.doctype.serial_no.serial_no import get_serial_nos
-from erpnext.stock.doctype.stock_reconciliation.stock_reconciliation import get_stock_balance_for
 from erpnext.stock.doctype.warehouse.warehouse import apply_warehouse_filter
 from erpnext.stock.utils import (
 	is_reposting_item_valuation_in_progress,
@@ -34,6 +32,9 @@ def execute(filters=None):
 		conversion_factors.append(0)
 
 	actual_qty = stock_value = 0
+	if opening_row:
+		actual_qty = opening_row.get("qty_after_transaction")
+		stock_value = opening_row.get("stock_value")
 
 	available_serial_nos = {}
 	inventory_dimension_filters_applied = check_inventory_dimension_filters_applied(filters)
@@ -76,25 +77,24 @@ def execute(filters=None):
 def update_available_serial_nos(available_serial_nos, sle):
 	serial_nos = get_serial_nos(sle.serial_no)
 	key = (sle.item_code, sle.warehouse)
+
 	if key not in available_serial_nos:
-		stock_balance = get_stock_balance_for(
-			sle.item_code, sle.warehouse, sle.posting_date, sle.posting_time
-		)
-		serials = get_serial_nos(stock_balance["serial_nos"]) if stock_balance["serial_nos"] else []
-		available_serial_nos.setdefault(key, serials)
+		# Start with empty list - build balance from transaction history only
+		# This ensures we only show serials that have SLE records, not orphaned serials
+		available_serial_nos.setdefault(key, [])
 
 	existing_serial_no = available_serial_nos[key]
+
+	# Properly add/remove serials based on transaction type
 	for sn in serial_nos:
 		if sle.actual_qty > 0:
-			if sn in existing_serial_no:
-				existing_serial_no.remove(sn)
-			else:
+			# Incoming: Add serial if not already in list
+			if sn not in existing_serial_no:
 				existing_serial_no.append(sn)
 		else:
+			# Outgoing: Remove serial if in list
 			if sn in existing_serial_no:
 				existing_serial_no.remove(sn)
-			else:
-				existing_serial_no.append(sn)
 
 	sle.balance_serial_no = "\n".join(existing_serial_no)
 
@@ -154,13 +154,6 @@ def get_columns(filters):
 				"convertible": "qty",
 			},
 			{
-				"label": _("Voucher #"),
-				"fieldname": "voucher_no",
-				"fieldtype": "Dynamic Link",
-				"options": "voucher_type",
-				"width": 150,
-			},
-			{
 				"label": _("Warehouse"),
 				"fieldname": "warehouse",
 				"fieldtype": "Link",
@@ -193,17 +186,21 @@ def get_columns(filters):
 			{
 				"label": _("Avg Rate (Balance Stock)"),
 				"fieldname": "valuation_rate",
-				"fieldtype": "Currency",
+				"fieldtype": filters.valuation_field_type,
 				"width": 180,
-				"options": "Company:company:default_currency",
+				"options": "Company:company:default_currency"
+				if filters.valuation_field_type == "Currency"
+				else None,
 				"convertible": "rate",
 			},
 			{
 				"label": _("Valuation Rate"),
 				"fieldname": "in_out_rate",
-				"fieldtype": "Currency",
+				"fieldtype": filters.valuation_field_type,
 				"width": 140,
-				"options": "Company:company:default_currency",
+				"options": "Company:company:default_currency"
+				if filters.valuation_field_type == "Currency"
+				else None,
 				"convertible": "rate",
 			},
 			{
@@ -264,12 +261,15 @@ def get_columns(filters):
 
 
 def get_stock_ledger_entries(filters, items):
+	from_date = get_datetime(filters.from_date + " 00:00:00")
+	to_date = get_datetime(filters.to_date + " 23:59:59")
+
 	sle = frappe.qb.DocType("Stock Ledger Entry")
 	query = (
 		frappe.qb.from_(sle)
 		.select(
 			sle.item_code,
-			CombineDatetime(sle.posting_date, sle.posting_time).as_("date"),
+			sle.posting_datetime.as_("date"),
 			sle.warehouse,
 			sle.posting_date,
 			sle.posting_time,
@@ -286,12 +286,8 @@ def get_stock_ledger_entries(filters, items):
 			sle.serial_no,
 			sle.project,
 		)
-		.where(
-			(sle.docstatus < 2)
-			& (sle.is_cancelled == 0)
-			& (sle.posting_date[filters.from_date : filters.to_date])
-		)
-		.orderby(CombineDatetime(sle.posting_date, sle.posting_time))
+		.where((sle.docstatus < 2) & (sle.is_cancelled == 0) & (sle.posting_datetime[from_date:to_date]))
+		.orderby(sle.posting_datetime)
 		.orderby(sle.creation)
 	)
 
@@ -306,7 +302,7 @@ def get_stock_ledger_entries(filters, items):
 		query = query.where(sle.item_code.isin(items))
 
 	for field in ["voucher_no", "batch_no", "project", "company"]:
-		if filters.get(field):
+		if filters.get(field) and field not in inventory_dimension_fields:
 			query = query.where(sle[field] == filters.get(field))
 
 	query = apply_warehouse_filter(query, sle, filters)
@@ -430,11 +426,8 @@ def get_opening_balance(filters, columns, sl_entries):
 def get_warehouse_condition(warehouse):
 	warehouse_details = frappe.db.get_value("Warehouse", warehouse, ["lft", "rgt"], as_dict=1)
 	if warehouse_details:
-		return (
-			" exists (select name from `tabWarehouse` wh \
-			where wh.lft >= %s and wh.rgt <= %s and warehouse = wh.name)"
-			% (warehouse_details.lft, warehouse_details.rgt)
-		)
+		return f" exists (select name from `tabWarehouse` wh \
+			where wh.lft >= {warehouse_details.lft} and wh.rgt <= {warehouse_details.rgt} and warehouse = wh.name)"
 
 	return ""
 
@@ -445,22 +438,17 @@ def get_item_group_condition(item_group, item_table=None):
 		if item_table:
 			ig = frappe.qb.DocType("Item Group")
 			return item_table.item_group.isin(
-				(
-					frappe.qb.from_(ig)
-					.select(ig.name)
-					.where(
-						(ig.lft >= item_group_details.lft)
-						& (ig.rgt <= item_group_details.rgt)
-						& (item_table.item_group == ig.name)
-					)
+				frappe.qb.from_(ig)
+				.select(ig.name)
+				.where(
+					(ig.lft >= item_group_details.lft)
+					& (ig.rgt <= item_group_details.rgt)
+					& (item_table.item_group == ig.name)
 				)
 			)
 		else:
-			return (
-				"item.item_group in (select ig.name from `tabItem Group` ig \
-				where ig.lft >= %s and ig.rgt <= %s and item.item_group = ig.name)"
-				% (item_group_details.lft, item_group_details.rgt)
-			)
+			return f"item.item_group in (select ig.name from `tabItem Group` ig \
+				where ig.lft >= {item_group_details.lft} and ig.rgt <= {item_group_details.rgt} and item.item_group = ig.name)"
 
 
 def check_inventory_dimension_filters_applied(filters) -> bool:

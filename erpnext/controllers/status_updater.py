@@ -5,7 +5,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import comma_or, flt, getdate, now, nowdate
+from frappe.utils import comma_or, flt, get_link_to_form, getdate, now, nowdate
 
 
 class OverAllowanceError(frappe.ValidationError):
@@ -47,15 +47,15 @@ status_map = {
 		],
 		[
 			"To Bill",
-			"eval:(self.per_delivered == 100 or self.skip_delivery_note) and self.per_billed < 100 and self.docstatus == 1",
+			"eval:(self.per_delivered >= 100 or self.skip_delivery_note) and self.per_billed < 100 and self.docstatus == 1",
 		],
 		[
 			"To Deliver",
-			"eval:self.per_delivered < 100 and self.per_billed == 100 and self.docstatus == 1 and not self.skip_delivery_note",
+			"eval:self.per_delivered < 100 and self.per_billed >= 100 and self.docstatus == 1 and not self.skip_delivery_note",
 		],
 		[
 			"Completed",
-			"eval:(self.per_delivered == 100 or self.skip_delivery_note) and self.per_billed == 100 and self.docstatus == 1",
+			"eval:(self.per_delivered >= 100 or self.skip_delivery_note) and self.per_billed >= 100 and self.docstatus == 1",
 		],
 		["Cancelled", "eval:self.docstatus==2"],
 		["Closed", "eval:self.status=='Closed' and self.docstatus != 2"],
@@ -91,47 +91,51 @@ status_map = {
 	],
 	"Purchase Receipt": [
 		["Draft", None],
-		["To Bill", "eval:self.per_billed < 100 and self.docstatus == 1"],
+		["To Bill", "eval:self.per_billed == 0 and self.docstatus == 1"],
+		["Partly Billed", "eval:self.per_billed > 0 and self.per_billed < 100 and self.docstatus == 1"],
 		["Return Issued", "eval:self.per_returned == 100 and self.docstatus == 1"],
-		["Completed", "eval:self.per_billed == 100 and self.docstatus == 1"],
+		[
+			"Completed",
+			"eval:(self.per_billed == 100 and self.docstatus == 1) or (self.docstatus == 1 and self.grand_total == 0 and self.per_returned != 100 and self.is_return == 0)",
+		],
 		["Cancelled", "eval:self.docstatus==2"],
 		["Closed", "eval:self.status=='Closed' and self.docstatus != 2"],
 	],
-	#"Material Request": [
-	#	["Draft", None],
-	#	["Stopped", "eval:self.status == 'Stopped'"],
-	#	["Cancelled", "eval:self.docstatus == 2"],
-	#	["Pending", "eval:self.status != 'Stopped' and self.per_ordered == 0 and self.docstatus == 1"],
-	#	[
-	#		"Ordered",
-	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
-	#	],
-	#	[
-	#		"Transferred",
-	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'",
-	#	],
-	#	[
-	#		"Issued",
-	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'",
-	#	],
-	#	[
-	#		"Received",
-	#		"eval:self.status != 'Stopped' and self.per_received == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
-	#	],
-	#	[
-	#		"Partially Received",
-	#		"eval:self.status != 'Stopped' and self.per_received > 0 and self.per_received < 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
-	#	],
-	#	[
-	#		"Partially Ordered",
-	#		"eval:self.status != 'Stopped' and self.per_ordered < 100 and self.per_ordered > 0 and self.docstatus == 1",
-	#	],
-	#	[
-	#		"Manufactured",
-	#		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'",
-	#	],
-	#],
-		# ***************************  MODIFIED 2022-09-10 ******************************************************************************************
+	# "Material Request": [
+	# 	["Draft", None],
+	# 	["Stopped", "eval:self.status == 'Stopped'"],
+	# 	["Cancelled", "eval:self.docstatus == 2"],
+	# 	["Pending", "eval:self.status != 'Stopped' and self.per_ordered == 0 and self.docstatus == 1"],
+	# 	[
+	# 		"Ordered",
+	# 		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+	# 	],
+	# 	[
+	# 		"Transferred",
+	# 		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'",
+	# 	],
+	# 	[
+	# 		"Issued",
+	# 		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'",
+	# 	],
+	# 	[
+	# 		"Received",
+	# 		"eval:self.status != 'Stopped' and self.per_received == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+	# 	],
+	# 	[
+	# 		"Partially Received",
+	# 		"eval:self.status != 'Stopped' and self.per_received > 0 and self.per_received < 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+	# 	],
+	# 	[
+	# 		"Partially Ordered",
+	# 		"eval:self.status != 'Stopped' and self.per_ordered < 100 and self.per_ordered > 0 and self.docstatus == 1",
+	# 	],
+	# 	[
+	# 		"Manufactured",
+	# 		"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'",
+	# 	],
+	# ],
+	# ***************************  MODIFIED 2022-09-10 ******************************************************************************************
 	# "Material Request": [
 	# 	["Draft", None],
 	# 	["Stopped", "eval:self.status == 'Stopped'"],
@@ -149,15 +153,35 @@ status_map = {
 		["Draft", None],
 		["Stopped", "eval:self.status == 'Stopped'"],
 		["Cancelled", "eval:self.docstatus == 2"],
-		["Pending", "eval:self.status != 'Stopped' and self.per_issued == 0 and self.per_ordered == 0 and self.docstatus == 1"], # ***********
-		["Partially Issued", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_issued > 0 and self.per_ordered == 0 and self.docstatus == 1"], # ***********
-		["Partially Ordered", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_ordered < 100 and self.per_ordered > 0 and self.per_received == 0 and self.docstatus == 1"], # ***********
-		["Ordered", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_ordered == 100 and self.docstatus == 1"], # ***********
-		["Partially Received", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_received < self.per_ordered and self.per_received > 0 and self.docstatus == 1"], # ***********
-		["Received", "eval:self.status != 'Stopped' and self.per_issued < 100 and self.per_ordered == self.per_received and self.per_received > 0 and self.docstatus == 1"], # ***********
-		["Issued", "eval:self.status != 'Stopped' and self.per_issued == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'"], # ***********
-		["Transferred", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'"],
-		["Manufactured", "eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'"]
+		["Pending", "eval:self.status != 'Stopped' and self.per_ordered == 0 and self.docstatus == 1"],
+		[
+			"Ordered",
+			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+		],
+		[
+			"Transferred",
+			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Transfer'",
+		],
+		[
+			"Issued",
+			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Material Issue'",
+		],
+		[
+			"Received",
+			"eval:self.status != 'Stopped' and self.per_received == 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+		],
+		[
+			"Partially Received",
+			"eval:self.status != 'Stopped' and self.per_received > 0 and self.per_received < 100 and self.docstatus == 1 and self.material_request_type == 'Purchase'",
+		],
+		[
+			"Partially Ordered",
+			"eval:self.status != 'Stopped' and self.per_ordered < 100 and self.per_ordered > 0 and self.docstatus == 1",
+		],
+		[
+			"Manufactured",
+			"eval:self.status != 'Stopped' and self.per_ordered == 100 and self.docstatus == 1 and self.material_request_type == 'Manufacture'",
+		],
 	],
 	"Bank Transaction": [
 		["Unreconciled", "eval:self.docstatus == 1 and self.unallocated_amount>0"],
@@ -260,6 +284,18 @@ class StatusUpdater(Document):
 
 				if hasattr(d, "qty") and d.qty > 0 and self.get("is_return"):
 					frappe.throw(_("For an item {0}, quantity must be negative number").format(d.item_code))
+
+				if not frappe.db.get_single_value("Selling Settings", "allow_negative_rates_for_items"):
+					if hasattr(d, "item_code") and hasattr(d, "rate") and flt(d.rate) < 0:
+						frappe.throw(
+							_(
+								"For item {0}, rate must be a positive number. To Allow negative rates, enable {1} in {2}"
+							).format(
+								frappe.bold(d.item_code),
+								frappe.bold(_("`Allow Negative rates for Items`")),
+								get_link_to_form("Selling Settings", "Selling Settings"),
+							),
+						)
 
 				if d.doctype == args["source_dt"] and d.get(args["join_field"]):
 					args["name"] = d.get(args["join_field"])
@@ -429,12 +465,13 @@ class StatusUpdater(Document):
 					args["second_source_extra_cond"] = ""
 
 				args["second_source_condition"] = frappe.db.sql(
-					""" select ifnull((select sum(%(second_source_field)s)
-					from `tab%(second_source_dt)s`
-					where `%(second_join_field)s`='%(detail_id)s'
-					and (`tab%(second_source_dt)s`.docstatus=1)
-					%(second_source_extra_cond)s), 0) """
-					% args
+					""" select ifnull((select sum({second_source_field})
+					from `tab{second_source_dt}`
+					where `{second_join_field}`='{detail_id}'
+					and (`tab{second_source_dt}`.docstatus=1)
+					{second_source_extra_cond}), 0) """.format(
+						**args
+					)
 				)[0][0]
 
 			if args["detail_id"]:
@@ -444,11 +481,12 @@ class StatusUpdater(Document):
 				args["source_dt_value"] = (
 					frappe.db.sql(
 						"""
-						(select ifnull(sum(%(source_field)s), 0)
-							from `tab%(source_dt)s` where `%(join_field)s`='%(detail_id)s'
-							and (docstatus=1 %(cond)s) %(extra_cond)s)
-				"""
-						% args
+						(select ifnull(sum({source_field}), 0)
+							from `tab{source_dt}` where `{join_field}`='{detail_id}'
+							and (docstatus=1 {cond}) {extra_cond})
+				""".format(
+							**args
+						)
 					)[0][0]
 					or 0.0
 				)
@@ -457,10 +495,11 @@ class StatusUpdater(Document):
 					args["source_dt_value"] += flt(args["second_source_condition"])
 
 				frappe.db.sql(
-					"""update `tab%(target_dt)s`
-					set %(target_field)s = %(source_dt_value)s %(update_modified)s
-					where name='%(detail_id)s'"""
-					% args
+					"""update `tab{target_dt}`
+					set {target_field} = {source_dt_value} {update_modified}
+					where name='{detail_id}'""".format(
+						**args
+					)
 				)
 
 	def _update_percent_field_in_targets(self, args, update_modified=True):
@@ -487,26 +526,28 @@ class StatusUpdater(Document):
 
 		if args.get("target_parent_field"):
 			frappe.db.sql(
-				"""update `tab%(target_parent_dt)s`
-				set %(target_parent_field)s = round(
+				"""update `tab{target_parent_dt}`
+				set {target_parent_field} = round(
 					ifnull((select
-						ifnull(sum(case when abs(%(target_ref_field)s) > abs(%(target_field)s) then abs(%(target_field)s) else abs(%(target_ref_field)s) end), 0)
-						/ sum(abs(%(target_ref_field)s)) * 100
-					from `tab%(target_dt)s` where parent='%(name)s' having sum(abs(%(target_ref_field)s)) > 0), 0), 6)
-					%(update_modified)s
-				where name='%(name)s'"""
-				% args
+						ifnull(sum(case when abs({target_ref_field}) > abs({target_field}) then abs({target_field}) else abs({target_ref_field}) end), 0)
+						/ sum(abs({target_ref_field})) * 100
+					from `tab{target_dt}` where parent='{name}' and parenttype='{target_parent_dt}' having sum(abs({target_ref_field})) > 0), 0), 6)
+					{update_modified}
+				where name='{name}'""".format(
+					**args
+				)
 			)
 
 			# update field
 			if args.get("status_field"):
 				frappe.db.sql(
-					"""update `tab%(target_parent_dt)s`
-					set %(status_field)s = (case when %(target_parent_field)s<0.001 then 'Not %(keyword)s'
-					else case when %(target_parent_field)s>=99.999999 then 'Fully %(keyword)s'
-					else 'Partly %(keyword)s' end end)
-					where name='%(name)s'"""
-					% args
+					"""update `tab{target_parent_dt}`
+					set {status_field} = (case when {target_parent_field}<0.001 then 'Not {keyword}'
+					else case when {target_parent_field}>=99.999999 then 'Fully {keyword}'
+					else 'Partly {keyword}' end end)
+					where name='{name}'""".format(
+						**args
+					)
 				)
 
 			if update_modified:
@@ -519,7 +560,7 @@ class StatusUpdater(Document):
 			args["update_modified"] = ""
 			return
 
-		args["update_modified"] = ", modified = {0}, modified_by = {1}".format(
+		args["update_modified"] = ", modified = {}, modified_by = {}".format(
 			frappe.db.escape(now()), frappe.db.escape(frappe.session.user)
 		)
 
@@ -533,7 +574,7 @@ class StatusUpdater(Document):
 			return
 
 		zero_amount_refdocs = frappe.db.sql_list(
-			"""
+			f"""
 			SELECT
 				name
 			from
@@ -542,9 +583,7 @@ class StatusUpdater(Document):
 				docstatus = 1
 				and base_net_total = 0
 				and name in %(ref_docs)s
-		""".format(
-				ref_dt=ref_dt
-			),
+		""",
 			{"ref_docs": ref_docs},
 		)
 
@@ -555,9 +594,10 @@ class StatusUpdater(Document):
 		for ref_dn in zero_amount_refdoc:
 			ref_doc_qty = flt(
 				frappe.db.sql(
-					"""select ifnull(sum(qty), 0) from `tab%s Item`
-				where parent=%s"""
-					% (ref_dt, "%s"),
+					"""select ifnull(sum(qty), 0) from `tab{} Item`
+				where parent={}""".format(
+						ref_dt, "%s"
+					),
 					(ref_dn),
 				)[0][0]
 			)
@@ -565,8 +605,9 @@ class StatusUpdater(Document):
 			billed_qty = flt(
 				frappe.db.sql(
 					"""select ifnull(sum(qty), 0)
-				from `tab%s Item` where %s=%s and docstatus=1"""
-					% (self.doctype, ref_fieldname, "%s"),
+				from `tab{} Item` where {}={} and docstatus=1""".format(
+						self.doctype, ref_fieldname, "%s"
+					),
 					(ref_dn),
 				)[0][0]
 			)
@@ -589,6 +630,7 @@ class StatusUpdater(Document):
 			ref_doc.set_status(update=True)
 
 
+@frappe.request_cache
 def get_allowance_for(
 	item_code,
 	item_allowance=None,
@@ -618,20 +660,20 @@ def get_allowance_for(
 				global_amount_allowance,
 			)
 
-	qty_allowance, over_billing_allowance = frappe.db.get_value(
+	qty_allowance, over_billing_allowance = frappe.get_cached_value(
 		"Item", item_code, ["over_delivery_receipt_allowance", "over_billing_allowance"]
 	)
 
 	if qty_or_amount == "qty" and not qty_allowance:
-		if global_qty_allowance == None:
+		if global_qty_allowance is None:
 			global_qty_allowance = flt(
-				frappe.db.get_single_value("Stock Settings", "over_delivery_receipt_allowance")
+				frappe.get_cached_value("Stock Settings", None, "over_delivery_receipt_allowance")
 			)
 		qty_allowance = global_qty_allowance
 	elif qty_or_amount == "amount" and not over_billing_allowance:
-		if global_amount_allowance == None:
+		if global_amount_allowance is None:
 			global_amount_allowance = flt(
-				frappe.db.get_single_value("Accounts Settings", "over_billing_allowance")
+				frappe.get_cached_value("Accounts Settings", None, "over_billing_allowance")
 			)
 		over_billing_allowance = global_amount_allowance
 

@@ -88,7 +88,8 @@ class Workstation(Document):
 
 			if existing:
 				frappe.throw(
-					_("Row #{0}: Timings conflicts with row {1}").format(d.idx, comma_and(existing)), OverlapError
+					_("Row #{0}: Timings conflicts with row {1}").format(d.idx, comma_and(existing)),
+					OverlapError,
 				)
 
 	def update_bom_operation(self):
@@ -114,7 +115,7 @@ class Workstation(Document):
 
 		if schedule_date in tuple(get_holidays(self.holiday_list)):
 			schedule_date = add_days(schedule_date, 1)
-			self.validate_workstation_holiday(schedule_date, skip_holiday_list_check=True)
+			return self.validate_workstation_holiday(schedule_date, skip_holiday_list_check=True)
 
 		return schedule_date
 
@@ -128,7 +129,6 @@ def get_default_holiday_list():
 
 def check_if_within_operating_hours(workstation, operation, from_datetime, to_datetime):
 	if from_datetime and to_datetime:
-
 		if not cint(
 			frappe.db.get_value("Manufacturing Settings", "None", "allow_production_on_holidays")
 		):

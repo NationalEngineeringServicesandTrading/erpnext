@@ -42,7 +42,7 @@ def get_data(filters):
 
 
 def get_chart_data(periodic_data, columns):
-	labels = ["Rejected", "Accepted"]
+	labels = [_("Rejected"), _("Accepted")]
 
 	status_wise_data = {"Accepted": 0, "Rejected": 0}
 
@@ -53,7 +53,7 @@ def get_chart_data(periodic_data, columns):
 
 	datasets.append(
 		{
-			"name": "Qty Wise Chart",
+			"name": _("Qty Wise Chart"),
 			"values": [status_wise_data.get("Rejected"), status_wise_data.get("Accepted")],
 		}
 	)
@@ -69,7 +69,7 @@ def get_columns(filters):
 			"label": _("Id"),
 			"fieldname": "name",
 			"fieldtype": "Link",
-			"options": "Work Order",
+			"options": "Quality Inspection",
 			"width": 100,
 		},
 		{"label": _("Report Date"), "fieldname": "report_date", "fieldtype": "Date", "width": 150},

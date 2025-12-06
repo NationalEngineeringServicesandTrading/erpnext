@@ -20,8 +20,7 @@ def get_columns(filters):
 
 	ranges = get_period_date_ranges(filters)
 
-	for dummy, end_date in ranges:
-
+	for _dummy, end_date in ranges:
 		period = get_period(end_date, filters)
 
 		columns.append(
@@ -110,7 +109,7 @@ def get_data(filters, columns):
 	for label in labels:
 		work = {}
 		work["Status"] = label
-		for dummy, end_date in ranges:
+		for _dummy, end_date in ranges:
 			period = get_period(end_date, filters)
 			if periodic_data.get(label).get(period):
 				work[scrub(period)] = periodic_data.get(label).get(period)
@@ -134,11 +133,11 @@ def get_chart_data(periodic_data, columns):
 		pending.append(periodic_data.get("Pending").get(d))
 		completed.append(periodic_data.get("Completed").get(d))
 
-	datasets.append({"name": "All Work Orders", "values": all_data})
-	datasets.append({"name": "Not Started", "values": not_start})
-	datasets.append({"name": "Overdue", "values": overdue})
-	datasets.append({"name": "Pending", "values": pending})
-	datasets.append({"name": "Completed", "values": completed})
+	datasets.append({"name": _("All Work Orders"), "values": all_data})
+	datasets.append({"name": _("Not Started"), "values": not_start})
+	datasets.append({"name": _("Overdue"), "values": overdue})
+	datasets.append({"name": _("Pending"), "values": pending})
+	datasets.append({"name": _("Completed"), "values": completed})
 
 	chart = {"data": {"labels": labels, "datasets": datasets}}
 	chart["type"] = "line"

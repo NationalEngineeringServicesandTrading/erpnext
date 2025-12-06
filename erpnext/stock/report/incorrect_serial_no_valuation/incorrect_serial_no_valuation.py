@@ -47,7 +47,7 @@ def get_incorrect_serial_nos(serial_nos_data):
 		{"qty": 0, "valuation_rate": 0, "serial_no": frappe.bold(_("Balance"))}
 	)
 
-	for serial_no, data in serial_nos_data.items():
+	for _serial_no, data in serial_nos_data.items():
 		total_dict = frappe._dict({"qty": 0, "valuation_rate": 0, "serial_no": frappe.bold(_("Total"))})
 
 		if check_incorrect_serial_data(data, total_dict):

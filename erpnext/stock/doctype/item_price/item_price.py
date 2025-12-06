@@ -3,7 +3,7 @@
 
 
 import frappe
-from frappe import _
+from frappe import _, bold
 from frappe.model.document import Document
 from frappe.query_builder import Criterion
 from frappe.query_builder.functions import Cast_
@@ -21,6 +21,7 @@ class ItemPrice(Document):
 		self.update_price_list_details()
 		self.update_item_details()
 		self.check_duplicates()
+		self.validate_item_template()
 
 	def validate_item(self):
 		if not frappe.db.exists("Item", self.item_code):
@@ -39,7 +40,7 @@ class ItemPrice(Document):
 
 			if not price_list_details:
 				link = frappe.utils.get_link_to_form("Price List", self.price_list)
-				frappe.throw("The price list {0} does not exist or is disabled".format(link))
+				frappe.throw(f"The price list {link} does not exist or is disabled")
 
 			self.buying, self.selling, self.currency = price_list_details
 
@@ -49,8 +50,13 @@ class ItemPrice(Document):
 				"Item", self.item_code, ["item_name", "description"]
 			)
 
-	def check_duplicates(self):
+	def validate_item_template(self):
+		if frappe.get_cached_value("Item", self.item_code, "has_variants"):
+			msg = f"Item Price cannot be created for the template item {bold(self.item_code)}"
 
+			frappe.throw(_(msg))
+
+	def check_duplicates(self):
 		item_price = frappe.qb.DocType("Item Price")
 
 		query = (

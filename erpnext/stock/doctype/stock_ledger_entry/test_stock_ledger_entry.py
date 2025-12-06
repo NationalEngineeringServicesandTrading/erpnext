@@ -2,12 +2,12 @@
 # See license.txt
 
 import json
+import time
 from uuid import uuid4
 
 import frappe
 from frappe.core.page.permission_manager.permission_manager import reset
 from frappe.custom.doctype.property_setter.property_setter import make_property_setter
-from frappe.query_builder.functions import CombineDatetime
 from frappe.tests.utils import FrappeTestCase, change_settings
 from frappe.utils import add_days, add_to_date, flt, today
 
@@ -121,7 +121,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		self.assertEqual(finished_item_sle.get("valuation_rate"), 540)
 
 		# Reconciliation for _Test Item for Reposting at Stores on 12-04-2020: Qty = 50, Rate = 150
-		sr = create_stock_reconciliation(
+		create_stock_reconciliation(
 			item_code="_Test Item for Reposting",
 			warehouse="Stores - _TC",
 			qty=50,
@@ -483,7 +483,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		expected_incoming_rates = expected_abs_svd = [75, 125, 75, 125]
 
 		self.assertEqual(expected_abs_svd, svd_list, "Incorrect 'Stock Value Difference' values")
-		for dn, incoming_rate in zip(dns, expected_incoming_rates):
+		for dn, incoming_rate in zip(dns, expected_incoming_rates, strict=False):
 			self.assertEqual(
 				dn.items[0].incoming_rate,
 				incoming_rate,
@@ -714,8 +714,10 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		item, warehouses, batches = setup_item_valuation_test(use_batchwise_valuation=0)
 
 		def check_sle_details_against_expected(sle_details, expected_sle_details, detail, columns):
-			for i, (sle_vals, ex_sle_vals) in enumerate(zip(sle_details, expected_sle_details)):
-				for col, sle_val, ex_sle_val in zip(columns, sle_vals, ex_sle_vals):
+			for i, (sle_vals, ex_sle_vals) in enumerate(
+				zip(sle_details, expected_sle_details, strict=False)
+			):
+				for col, sle_val, ex_sle_val in zip(columns, sle_vals, ex_sle_vals, strict=False):
 					if col == "stock_queue":
 						sle_val = get_stock_value_from_q(sle_val)
 						ex_sle_val = get_stock_value_from_q(ex_sle_val)
@@ -788,7 +790,11 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 			old2,
 			update_invariants(
 				[
-					{"actual_qty": 10, "stock_value_difference": 10 * 20, "stock_queue": [[10, 10], [10, 20]]},
+					{
+						"actual_qty": 10,
+						"stock_value_difference": 10 * 20,
+						"stock_queue": [[10, 10], [10, 20]],
+					},
 				]
 			),
 		)
@@ -865,7 +871,11 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 			consume_new2,
 			update_invariants(
 				[
-					{"actual_qty": -10, "stock_value_difference": -10 * 42, "stock_queue": [[5, 20], [5, 15]]},
+					{
+						"actual_qty": -10,
+						"stock_value_difference": -10 * 42,
+						"stock_queue": [[5, 20], [5, 15]],
+					},
 				]
 			),
 		)
@@ -913,14 +923,14 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		receipt.submit()
 
 		expected_queues = []
-		for idx, rate in enumerate(rates, start=1):
+		for idx in range(1, len(rates) + 1):
 			expected_queues.append({"stock_queue": [[10, 10 * i] for i in range(1, idx + 1)]})
 		self.assertSLEs(receipt, expected_queues)
 
 		transfer = make_stock_entry(
 			item_code=item.name, source=source, target=target, qty=10, do_not_save=True, rate=10
 		)
-		for rate in rates[1:]:
+		for _ in rates[1:]:
 			row = frappe.copy_doc(transfer.items[0], ignore_no_copy=False)
 			transfer.append("items", row)
 
@@ -951,7 +961,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		repack = make_stock_entry(
 			item_code=rm.name, source=warehouse, qty=10, do_not_save=True, rate=10, purpose="Repack"
 		)
-		for rate in rates[1:]:
+		for _ in rates[1:]:
 			row = frappe.copy_doc(repack.items[0], ignore_no_copy=False)
 			repack.append("items", row)
 
@@ -981,7 +991,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		item = make_item(properties={"allow_negative_stock": 1}).name
 		warehouse = "_Test Warehouse - _TC"
 
-		receipt = make_stock_entry(item_code=item, target=warehouse, qty=10, rate=10)
+		make_stock_entry(item_code=item, target=warehouse, qty=10, rate=10)
 		consume1 = make_stock_entry(item_code=item, source=warehouse, qty=15)
 
 		self.assertSLEs(consume1, [{"stock_value": -5 * 10, "stock_queue": [[-5, 10]]}])
@@ -1051,6 +1061,8 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		self.assertEqual(50, _get_stock_credit(final_consumption))
 
 	def test_tie_breaking(self):
+		from erpnext.stock.doctype.repost_item_valuation.repost_item_valuation import repost_entries
+
 		frappe.flags.dont_execute_stock_reposts = True
 		self.addCleanup(frappe.flags.pop, "dont_execute_stock_reposts")
 
@@ -1066,7 +1078,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 				frappe.qb.from_(sle)
 				.select("qty_after_transaction")
 				.where((sle.item_code == item) & (sle.warehouse == warehouse) & (sle.is_cancelled == 0))
-				.orderby(CombineDatetime(sle.posting_date, sle.posting_time))
+				.orderby(sle.posting_datetime)
 				.orderby(sle.creation)
 			).run(pluck=True)
 
@@ -1093,6 +1105,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		self.assertEqual([10, 11], ordered_qty_after_transaction())
 
 		first.cancel()
+		repost_entries()
 		self.assertEqual([1], ordered_qty_after_transaction())
 
 		backdated = make_stock_entry(
@@ -1108,11 +1121,10 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 		self.assertEqual([1], ordered_qty_after_transaction())
 
 	def test_timestamp_clash(self):
-
 		item = make_item().name
 		warehouse = "_Test Warehouse - _TC"
 
-		reciept = make_stock_entry(
+		make_stock_entry(
 			item_code=item,
 			to_warehouse=warehouse,
 			qty=100,
@@ -1121,7 +1133,7 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 			posting_time="01:00:00",
 		)
 
-		consumption = make_stock_entry(
+		make_stock_entry(
 			item_code=item,
 			from_warehouse=warehouse,
 			qty=50,
@@ -1140,8 +1152,89 @@ class TestStockLedgerEntry(FrappeTestCase, StockTestMixin):
 
 		try:
 			backdated_receipt.cancel()
-		except Exception as e:
+		except Exception:
 			self.fail("Double processing of qty for clashing timestamp.")
+
+	def test_previous_sle_with_clashed_timestamp(self):
+		item = make_item().name
+		warehouse = "_Test Warehouse - _TC"
+
+		reciept1 = make_stock_entry(
+			item_code=item,
+			to_warehouse=warehouse,
+			qty=100,
+			rate=10,
+			posting_date="2021-01-01",
+			posting_time="02:00:00",
+		)
+
+		time.sleep(3)
+
+		reciept2 = make_stock_entry(
+			item_code=item,
+			to_warehouse=warehouse,
+			qty=5,
+			posting_date="2021-01-01",
+			rate=10,
+			posting_time="02:00:00.1234",
+		)
+
+		sle = frappe.get_all(
+			"Stock Ledger Entry",
+			filters={"voucher_no": reciept1.name},
+			fields=["qty_after_transaction", "actual_qty"],
+		)
+		self.assertEqual(sle[0].qty_after_transaction, 100)
+		self.assertEqual(sle[0].actual_qty, 100)
+
+		sle = frappe.get_all(
+			"Stock Ledger Entry",
+			filters={"voucher_no": reciept2.name},
+			fields=["qty_after_transaction", "actual_qty"],
+		)
+		self.assertEqual(sle[0].qty_after_transaction, 105)
+		self.assertEqual(sle[0].actual_qty, 5)
+
+	def test_backdated_sle_with_same_timestamp(self):
+		item = make_item().name
+		warehouse = "_Test Warehouse - _TC"
+
+		reciept1 = make_stock_entry(
+			item_code=item,
+			to_warehouse=warehouse,
+			qty=5,
+			posting_date="2021-01-01",
+			rate=10,
+			posting_time="02:00:00",
+		)
+
+		time.sleep(3)
+
+		# backdated entry with same timestamp but different ms part
+		reciept2 = make_stock_entry(
+			item_code=item,
+			to_warehouse=warehouse,
+			qty=100,
+			rate=10,
+			posting_date="2021-01-01",
+			posting_time="02:00:00.1234",
+		)
+
+		sle = frappe.get_all(
+			"Stock Ledger Entry",
+			filters={"voucher_no": reciept1.name},
+			fields=["qty_after_transaction", "actual_qty"],
+		)
+		self.assertEqual(sle[0].qty_after_transaction, 5)
+		self.assertEqual(sle[0].actual_qty, 5)
+
+		sle = frappe.get_all(
+			"Stock Ledger Entry",
+			filters={"voucher_no": reciept2.name},
+			fields=["qty_after_transaction", "actual_qty"],
+		)
+		self.assertEqual(sle[0].qty_after_transaction, 105)
+		self.assertEqual(sle[0].actual_qty, 100)
 
 	@change_settings("System Settings", {"float_precision": 3, "currency_precision": 2})
 	def test_transfer_invariants(self):
@@ -1345,12 +1438,13 @@ def create_items(items=None, uoms=None):
 
 
 def setup_item_valuation_test(
-	valuation_method="FIFO", suffix=None, use_batchwise_valuation=1, batches_list=["X", "Y"]
+	valuation_method="FIFO", suffix=None, use_batchwise_valuation=1, batches_list=None
 ):
-	from erpnext.stock.doctype.batch.batch import make_batch
 	from erpnext.stock.doctype.item.test_item import make_item
 	from erpnext.stock.doctype.warehouse.test_warehouse import create_warehouse
 
+	if batches_list is None:
+		batches_list = ["X", "Y"]
 	if not suffix:
 		suffix = get_unique_suffix()
 
@@ -1364,7 +1458,7 @@ def setup_item_valuation_test(
 	for i, batch_id in enumerate(batches):
 		if not frappe.db.exists("Batch", batch_id):
 			ubw = use_batchwise_valuation
-			if isinstance(use_batchwise_valuation, (list, tuple)):
+			if isinstance(use_batchwise_valuation, list | tuple):
 				ubw = use_batchwise_valuation[i]
 			batch = frappe.get_doc(
 				frappe._dict(

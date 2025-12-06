@@ -52,10 +52,24 @@ def make_variant_based_on_manufacturer(template, manufacturer, manufacturer_part
 
 	copy_attributes_to_variant(template, variant)
 
-	variant.manufacturer = manufacturer
-	variant.manufacturer_part_no = manufacturer_part_no
-
 	variant.item_code = append_number_if_name_exists("Item", template.name)
+	variant.flags.ignore_mandatory = True
+	variant.save()
+
+	if not frappe.db.exists(
+		"Item Manufacturer", {"item_code": variant.name, "manufacturer": manufacturer}
+	):
+		manufacturer_doc = frappe.new_doc("Item Manufacturer")
+		manufacturer_doc.update(
+			{
+				"item_code": variant.name,
+				"manufacturer": manufacturer,
+				"manufacturer_part_no": manufacturer_part_no,
+			}
+		)
+
+		manufacturer_doc.flags.ignore_mandatory = True
+		manufacturer_doc.save(ignore_permissions=True)
 
 	return variant
 
@@ -158,7 +172,7 @@ def get_attribute_values(item):
 
 def find_variant(template, args, variant_item_code=None):
 	conditions = [
-		"""(iv_attribute.attribute={0} and iv_attribute.attribute_value={1})""".format(
+		"""(iv_attribute.attribute={} and iv_attribute.attribute_value={})""".format(
 			frappe.db.escape(key), frappe.db.escape(cstr(value))
 		)
 		for key, value in args.items()
@@ -380,8 +394,8 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 		abbreviations.append(abbr_or_value)
 
 	if abbreviations:
-		variant.item_code = "{0}-{1}".format(template_item_code, "-".join(abbreviations))
-		variant.item_name = "{0}-{1}".format(template_item_name, "-".join(abbreviations))
+		variant.item_code = "{}-{}".format(template_item_code, "-".join(abbreviations))
+		variant.item_name = "{}-{}".format(template_item_name, "-".join(abbreviations))
 
 
 @frappe.whitelist()

@@ -13,7 +13,7 @@ def execute(filters=None):
 	return ProductionPlanReport(filters).execute_report()
 
 
-class ProductionPlanReport(object):
+class ProductionPlanReport:
 	def __init__(self, filters=None):
 		self.filters = frappe._dict(filters or {})
 		self.raw_materials_dict = {}

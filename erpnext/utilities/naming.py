@@ -53,8 +53,6 @@ def set_by_naming_series(
 
 			# set values for mandatory
 			frappe.db.sql(
-				"""update `tab{doctype}` set `{fieldname}`=`name` where
-				ifnull({fieldname}, '')=''""".format(
-					doctype=doctype, fieldname=fieldname
-				)
+				f"""update `tab{doctype}` set `{fieldname}`=`name` where
+				ifnull({fieldname}, '')=''"""
 			)

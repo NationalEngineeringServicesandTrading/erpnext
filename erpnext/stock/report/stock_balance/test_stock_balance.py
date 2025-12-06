@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 import frappe
 from frappe import _dict
@@ -32,12 +32,11 @@ class TestStockBalance(FrappeTestCase):
 	def tearDown(self):
 		frappe.db.rollback()
 
-	def assertPartialDictEq(self, expected: Dict[str, Any], actual: Dict[str, Any]):
+	def assertPartialDictEq(self, expected: dict[str, Any], actual: dict[str, Any]):
 		for k, v in expected.items():
 			self.assertEqual(v, actual[k], msg=f"{expected=}\n{actual=}")
 
 	def generate_stock_ledger(self, item_code: str, movements):
-
 		for movement in map(_dict, movements):
 			if "to_warehouse" not in movement:
 				movement.to_warehouse = "_Test Warehouse - _TC"
@@ -128,7 +127,6 @@ class TestStockBalance(FrappeTestCase):
 		self.assertPartialDictEq({"opening_qty": 6, "in_qty": 0}, rows[0])
 
 	def test_uom_converted_info(self):
-
 		self.item.append("uoms", {"conversion_factor": 5, "uom": "Box"})
 		self.item.save()
 

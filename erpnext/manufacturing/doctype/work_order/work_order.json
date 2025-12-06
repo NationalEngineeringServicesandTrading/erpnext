@@ -22,17 +22,13 @@
   "produced_qty",
   "process_loss_qty",
   "project",
-  "serial_no_and_batch_for_finished_good_section",
-  "has_serial_no",
-  "has_batch_no",
-  "column_break_17",
-  "serial_no",
-  "batch_size",
+  "section_break_ndpq",
+  "required_items",
   "work_order_configuration",
   "settings_section",
   "allow_alternative_item",
   "use_multi_level_bom",
-  "column_break_18",
+  "column_break_17",
   "skip_transfer",
   "from_wip_warehouse",
   "update_consumed_material_cost_in_project",
@@ -42,12 +38,17 @@
   "column_break_12",
   "fg_warehouse",
   "scrap_warehouse",
+  "serial_no_and_batch_for_finished_good_section",
+  "has_serial_no",
+  "has_batch_no",
+  "column_break_18",
+  "serial_no",
+  "batch_size",
   "required_items_section",
   "materials_and_operations_tab",
-  "required_items",
   "operations_section",
-  "operations",
   "transfer_material_against",
+  "operations",
   "time",
   "planned_start_date",
   "planned_end_date",
@@ -330,7 +331,6 @@
    "label": "Expected Delivery Date"
   },
   {
-   "collapsible": 1,
    "fieldname": "operations_section",
    "fieldtype": "Section Break",
    "label": "Operations",
@@ -405,6 +405,8 @@
    "read_only": 1
   },
   {
+   "fetch_from": "production_item.stock_uom",
+   "fetch_if_empty": 1,
    "fieldname": "stock_uom",
    "fieldtype": "Link",
    "label": "Stock UOM",
@@ -446,7 +448,8 @@
    "no_copy": 1,
    "options": "Production Plan",
    "print_hide": 1,
-   "read_only": 1
+   "read_only": 1,
+   "search_index": 1
   },
   {
    "fieldname": "production_plan_item",
@@ -586,7 +589,11 @@
   {
    "fieldname": "materials_and_operations_tab",
    "fieldtype": "Tab Break",
-   "label": "Materials & Operations"
+   "label": "Operations"
+  },
+  {
+   "fieldname": "section_break_ndpq",
+   "fieldtype": "Section Break"
   }
  ],
  "icon": "fa fa-cogs",
@@ -594,7 +601,7 @@
  "image_field": "image",
  "is_submittable": 1,
  "links": [],
- "modified": "2023-01-03 14:16:35.427731",
+ "modified": "2024-02-11 15:47:13.454422",
  "modified_by": "Administrator",
  "module": "Manufacturing",
  "name": "Work Order",
@@ -614,7 +621,6 @@
    "read": 1,
    "report": 1,
    "role": "Manufacturing User",
-   "set_user_permissions": 1,
    "share": 1,
    "submit": 1,
    "write": 1
