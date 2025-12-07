@@ -75,7 +75,19 @@ def execute(filters=None):
 
 
 def update_available_serial_nos(available_serial_nos, sle):
-	serial_nos = get_serial_nos(sle.serial_no)
+	from erpnext.stock.doctype.serial_no.serial_no import get_delivered_serial_nos
+
+	# Get serial numbers - handle both newline and space-separated formats
+	serial_nos_raw = get_serial_nos(sle.serial_no)
+	# If get_serial_nos returns a single string with spaces, split it further
+	serial_nos = []
+	for item in serial_nos_raw:
+		if " " in item:
+			# Space-separated serials in a single string - split them
+			serial_nos.extend([s.strip() for s in item.split(" ") if s.strip()])
+		else:
+			serial_nos.append(item)
+
 	key = (sle.item_code, sle.warehouse)
 
 	if key not in available_serial_nos:
@@ -96,7 +108,19 @@ def update_available_serial_nos(available_serial_nos, sle):
 			if sn in existing_serial_no:
 				existing_serial_no.remove(sn)
 
-	sle.balance_serial_no = "\n".join(existing_serial_no)
+	# Filter out delivered serials (only if we have serials to check)
+	# This handles edge cases where serials were delivered from other warehouses
+	# after being transferred from this warehouse
+	if available_serial_nos[key]:
+		delivered_serials = get_delivered_serial_nos("\n".join(available_serial_nos[key])) or []
+		if delivered_serials:
+			# Filter in place - remove delivered serials from the list
+			available_serial_nos[key] = [
+				sn for sn in available_serial_nos[key] if sn not in delivered_serials
+			]
+
+	# Sort for consistent display
+	sle.balance_serial_no = "\n".join(sorted(available_serial_nos[key]))
 
 
 def get_columns(filters):
