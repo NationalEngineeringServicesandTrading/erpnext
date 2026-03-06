@@ -282,7 +282,7 @@ class FIFOSlots:
 			self.__adjust_incoming_transfer_qty(transfer_data, fifo_queue, row)
 		else:
 			if not serial_nos:
-				if fifo_queue and flt(fifo_queue[0][0]) <= 0:
+				if fifo_queue and not isinstance(fifo_queue[0][0], str) and flt(fifo_queue[0][0]) <= 0:
 					# neutralize 0/negative stock by adding positive stock
 					fifo_queue[0][0] += flt(row.actual_qty)
 					fifo_queue[0][1] = row.posting_date
@@ -330,7 +330,7 @@ class FIFOSlots:
 		transfer_qty_to_pop = flt(row.actual_qty)
 
 		def add_to_fifo_queue(slot):
-			if fifo_queue and flt(fifo_queue[0][0]) <= 0:
+			if fifo_queue and not isinstance(fifo_queue[0][0], str) and flt(fifo_queue[0][0]) <= 0:
 				# neutralize 0/negative stock by adding positive stock
 				fifo_queue[0][0] += flt(slot[0])
 				fifo_queue[0][1] = slot[1]
