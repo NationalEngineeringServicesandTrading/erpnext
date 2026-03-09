@@ -33,6 +33,7 @@
   "add_taxes_from_item_tax_template",
   "print_settings",
   "show_inclusive_tax_in_print",
+  "show_taxes_as_table_in_print",
   "column_break_12",
   "show_payment_schedule_in_print",
   "currency_exchange_section",
@@ -137,6 +138,12 @@
    "fieldname": "show_inclusive_tax_in_print",
    "fieldtype": "Check",
    "label": "Show Inclusive Tax in Print"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_taxes_as_table_in_print",
+   "fieldtype": "Check",
+   "label": "Show Taxes as Table in Print"
   },
   {
    "fieldname": "column_break_12",

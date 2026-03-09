@@ -1,4 +1,5 @@
 <div class="tax-break-up" style="overflow-x: auto;">
+	{% if itemised_tax is defined and itemised_tax %}
 	<table class="table table-bordered table-hover">
 		<thead>
 			<tr>
@@ -43,4 +44,5 @@
 			{% endfor %}
 		</tbody>
 	</table>
+	{% endif %}
 </div>

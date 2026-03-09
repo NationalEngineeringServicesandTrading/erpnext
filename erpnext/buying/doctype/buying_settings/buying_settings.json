@@ -14,6 +14,7 @@
   "maintain_same_rate_action",
   "role_to_override_stop_action",
   "transaction_settings_section",
+  "use_transaction_date_exchange_rate",
   "po_required",
   "pr_required",
   "column_break_12",
@@ -132,6 +133,13 @@
    "label": "Transaction Settings"
   },
   {
+   "default": "0",
+   "description": "While making Purchase Invoice from Purchase Order, use Exchange Rate on Invoice's transaction date rather than inheriting it from Purchase Order. Only applies for Purchase Invoice.",
+   "fieldname": "use_transaction_date_exchange_rate",
+   "fieldtype": "Check",
+   "label": "Use Transaction Date Exchange Rate"
+  },
+  {
    "fieldname": "column_break_12",
    "fieldtype": "Column Break"
   },
@@ -171,6 +179,14 @@
    "role": "Purchase Manager",
    "share": 1,
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Stock User"
+  },
+  {
+   "read": 1,
+   "role": "Purchase User"
   }
  ],
  "sort_field": "modified",
