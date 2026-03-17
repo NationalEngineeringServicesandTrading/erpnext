@@ -346,13 +346,13 @@ def execute(filters=None):
 		filters.from_fiscal_year, filters.to_fiscal_year, filters.periodicity,
 		filters.accumulated_values, filters.company
 	)
-	frappe.errprint ("period_list: {}".format(period_list))
+	frappe.errprint ("period_list: " + str(period_list))
 
 	mappers = get_mappers_from_db()
-	frappe.errprint ("mappers: {}".format(mappers))
+	frappe.errprint ("mappers: " + str(mappers))
 
 	cash_flow_accounts = setup_mappers(mappers)
-	frappe.errprint ("cash_flow_accounts: {}".format(cash_flow_accounts))
+	frappe.errprint ("cash_flow_accounts: " + str(cash_flow_accounts))
 
 	# compute net profit / loss
 	income = get_data(
@@ -360,7 +360,7 @@ def execute(filters=None):
 		accumulated_values=filters.accumulated_values, ignore_closing_entries=True,
 		ignore_accumulated_values_for_fy=True
 	)
-	frappe.errprint ("income: {}".format(income))
+	frappe.errprint ("income: " + str(income))
 
 
 	expense = get_data(
@@ -368,20 +368,20 @@ def execute(filters=None):
 		accumulated_values=filters.accumulated_values, ignore_closing_entries=True,
 		ignore_accumulated_values_for_fy=True
 	)
-	frappe.errprint ("expense: {}".format(expense))
+	frappe.errprint ("expense: " + str(expense))
 
 	net_profit_loss = get_net_profit_loss(income, expense, period_list, filters.company)
-	frappe.errprint ("net_profit_loss: {}".format(net_profit_loss))
+	frappe.errprint ("net_profit_loss: " + str(net_profit_loss))
 	
 	company_currency = frappe.get_cached_value('Company',  filters.company,  "default_currency")
-	frappe.errprint ("company_currency: {}".format(company_currency))
+	frappe.errprint ("company_currency: " + str(company_currency))
 
 	data = compute_data(filters, company_currency, net_profit_loss, period_list, mappers, cash_flow_accounts)
-	frappe.errprint ("data: {}".format(data))
+	frappe.errprint ("data: " + str(data))
 
 	_add_total_row_account(data, data, _("Net Change in Cash"), period_list, company_currency)
 	columns = get_columns(filters.periodicity, period_list, filters.accumulated_values, filters.company)
-	frappe.errprint ("columns: {}".format(columns))
+	frappe.errprint ("columns: " + str(columns))
 
 	return columns, data
 
@@ -445,8 +445,8 @@ def _get_account_type_based_data(filters, account_names, period_list, accumulate
 def _add_total_row_account(out, data, label, period_list, currency, indent=0.0):
 	total_row = {
 		"indent": indent,
-		"account_name": "'" + _("{0}").format(label) + "'",
-		"account": "'" + _("{0}").format(label) + "'",
+		"account_name": "'" + _("{0}") + str(label) + "'",
+		"account": "'" + _("{0}") + str(label) + "'",
 		"currency": currency
 	}
 	for row in data:
